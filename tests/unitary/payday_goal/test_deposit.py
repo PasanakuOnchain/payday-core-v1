@@ -36,14 +36,14 @@ def test_non_owner_cannot_deposit(factory, asset, saver, other):
     """T3: non-owner cannot deposit."""
     goal, _ = create_goal(factory, asset, saver)
     fund_and_approve(asset, other, goal.address, MIN_DEPOSIT)
-    with boa.env.prank(other), boa.reverts("payday_goal: caller is not nft owner"):
+    with boa.env.prank(other), boa.reverts(dev="payday_goal: caller is not nft owner"):
         goal.deposit(MIN_DEPOSIT)
 
 
 def test_deposit_below_min_reverts(factory, asset, saver):
     goal, _ = create_goal(factory, asset, saver)
     fund_and_approve(asset, saver, goal.address, MIN_DEPOSIT)
-    with boa.env.prank(saver), boa.reverts("payday_goal: amount below min"):
+    with boa.env.prank(saver), boa.reverts(dev="payday_goal: amount below min"):
         goal.deposit(MIN_DEPOSIT - 1)
 
 
@@ -55,5 +55,5 @@ def test_closed_goal_rejects_deposit(factory, asset, saver):
     goal.complete(sender=saver)
 
     fund_and_approve(asset, saver, goal.address, MIN_DEPOSIT)
-    with boa.env.prank(saver), boa.reverts("payday_goal: closed"):
+    with boa.env.prank(saver), boa.reverts(dev="payday_goal: closed"):
         goal.deposit(MIN_DEPOSIT)

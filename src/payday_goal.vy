@@ -14,14 +14,8 @@
 
 
 from ethereum.ercs import IERC20
-
-
 from ethereum.ercs import IERC721
-
-
 from ethereum.ercs import IERC4626
-
-
 from interfaces import IPaydayFactory
 
 
@@ -132,12 +126,12 @@ def __init__(
     @param token_id Factory ERC-721 token that gates this goal.
     @param min_deposit Minimum amount accepted by `deposit`.
     """
-    assert factory != empty(address), "payday_goal: zero factory"
-    assert asset != empty(address), "payday_goal: zero asset"
-    assert treasury != empty(address), "payday_goal: zero treasury"
-    assert target != empty(uint256), "payday_goal: zero target"
-    assert end_time > start_time, "payday_goal: bad times"
-    assert min_deposit != empty(uint256), "payday_goal: zero min deposit"
+    assert factory != empty(address)  # dev: payday_goal: zero factory
+    assert asset != empty(address)  # dev: payday_goal: zero asset
+    assert treasury != empty(address)  # dev: payday_goal: zero treasury
+    assert target != empty(uint256)  # dev: payday_goal: zero target
+    assert end_time > start_time  # dev: payday_goal: bad times
+    assert min_deposit != empty(uint256)  # dev: payday_goal: zero min deposit
 
     FACTORY = factory
     ASSET = asset
@@ -162,12 +156,12 @@ def deposit(amount: uint256):
     """
     self._check_open()
     self._check_nft_owner()
-    assert amount >= MIN_DEPOSIT, "payday_goal: amount below min"
+    assert amount >= MIN_DEPOSIT  # dev: payday_goal: amount below min
     self._assert_vault_healthy()
 
     first_deposit: bool = self.principal == empty(uint256)
     success: bool = extcall IERC20(ASSET).transferFrom(msg.sender, self, amount)
-    assert success, "payday_goal: transferFrom failed"
+    assert success  # dev: payday_goal: transferFrom failed
 
     self.principal += amount
     self._park(amount)
@@ -209,7 +203,7 @@ def complete():
     """
     self._check_open()
     self._check_nft_owner()
-    assert self.principal >= TARGET, "payday_goal: under target"
+    assert self.principal >= TARGET  # dev: payday_goal: under target
 
     owner: address = msg.sender
     amount: uint256 = self.principal
@@ -235,7 +229,7 @@ def early_exit():
     """
     self._check_open()
     self._check_nft_owner()
-    assert self.principal < TARGET, "payday_goal: use complete"
+    assert self.principal < TARGET  # dev: payday_goal: use complete
 
     owner: address = msg.sender
     fee: uint256 = empty(uint256)
@@ -265,7 +259,7 @@ def skim_yield():
     """
     self._check_open()
     surplus: uint256 = self._surplus()
-    assert surplus != empty(uint256), "payday_goal: no surplus"
+    assert surplus != empty(uint256)  # dev: payday_goal: no surplus
     self._payout(TREASURY, surplus)
     log YieldSkimmed(surplus=surplus)
 
@@ -276,7 +270,7 @@ def _check_open():
     """
     @dev Reverts if the goal has already been closed.
     """
-    assert not self.closed, "payday_goal: closed"
+    assert not self.closed  # dev: payday_goal: closed
 
 
 @internal
@@ -286,7 +280,7 @@ def _check_nft_owner():
     @dev Reverts unless `msg.sender` currently owns the factory access NFT.
     """
     owner: address = staticcall IERC721(FACTORY).ownerOf(TOKEN_ID)
-    assert msg.sender == owner, "payday_goal: caller is not nft owner"
+    assert msg.sender == owner  # dev: payday_goal: caller is not nft owner
 
 
 @internal
@@ -343,7 +337,7 @@ def _surplus() -> uint256:
     @return uint256 Surplus amount (may be zero).
     """
     held: uint256 = self._held_assets()
-    assert held >= self.principal, "payday_goal: vault shortfall"
+    assert held >= self.principal  # dev: payday_goal: vault shortfall
     return held - self.principal
 
 
@@ -356,7 +350,7 @@ def _assert_vault_healthy():
     if VAULT == empty(address):
         return
     held: uint256 = self._held_assets()
-    assert held >= self.principal, "payday_goal: vault shortfall"
+    assert held >= self.principal  # dev: payday_goal: vault shortfall
 
 
 @internal
@@ -368,7 +362,7 @@ def _park(amount: uint256):
     if VAULT == empty(address) or amount == empty(uint256):
         return
     success: bool = extcall IERC20(ASSET).approve(VAULT, amount)
-    assert success, "payday_goal: vault approve failed"
+    assert success  # dev: payday_goal: vault approve failed
     _: uint256 = extcall IERC4626(VAULT).deposit(amount, self)
 
 
@@ -383,6 +377,6 @@ def _payout(to: address, amount: uint256):
         return
     if VAULT == empty(address):
         success: bool = extcall IERC20(ASSET).transfer(to, amount)
-        assert success, "payday_goal: transfer failed"
+        assert success  # dev: payday_goal: transfer failed
     else:
         _: uint256 = extcall IERC4626(VAULT).withdraw(amount, to, self)

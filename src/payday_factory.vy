@@ -14,26 +14,20 @@
 
 
 from ethereum.ercs import IERC165
-implements: IERC165
-
-
 from ethereum.ercs import IERC721
-implements: IERC721
-
-
 from snekmate.tokens.interfaces import IERC721Metadata
-implements: IERC721Metadata
-
-
 from snekmate.tokens.interfaces import IERC721Enumerable
+from snekmate.auth import ownable as ow
+from snekmate.tokens import erc721
+
+
+implements: IERC165
+implements: IERC721
+implements: IERC721Metadata
 implements: IERC721Enumerable
 
 
-from snekmate.auth import ownable as ow
 initializes: ow
-
-
-from snekmate.tokens import erc721
 initializes: erc721[ownable := ow]
 
 
@@ -202,17 +196,19 @@ def __init__(
     @param uri_in_progress Static metadata URI after the first deposit.
     @param uri_completed Static metadata URI after complete or early exit.
     """
-    assert goal_blueprint != empty(address), "payday_factory: zero blueprint"
-    assert treasury != empty(address), "payday_factory: zero treasury"
+    assert goal_blueprint != empty(
+        address
+    )  # dev: payday_factory: zero blueprint
+    assert treasury != empty(address)  # dev: payday_factory: zero treasury
     assert len(uri_created) != empty(
         uint256
-    ), "payday_factory: empty created uri"
+    )  # dev: payday_factory: empty created uri
     assert len(uri_in_progress) != empty(
         uint256
-    ), "payday_factory: empty progress uri"
+    )  # dev: payday_factory: empty progress uri
     assert len(uri_completed) != empty(
         uint256
-    ), "payday_factory: empty completed uri"
+    )  # dev: payday_factory: empty completed uri
 
     ow.__init__()
     # Empty base URI: `tokenURI` returns the per-token pack string only.
@@ -248,16 +244,18 @@ def create_goal(
     @return token_id The minted ERC-721 token id.
     """
     config: AssetConfig = self.asset_config[asset]
-    assert config.allowed, "payday_factory: asset not allowed"
-    assert target >= config.min_target, "payday_factory: target too low"
+    assert config.allowed  # dev: payday_factory: asset not allowed
+    assert target >= config.min_target  # dev: payday_factory: target too low
     assert (
         start_penalty_bps <= MAX_START_PENALTY_BPS
-    ), "payday_factory: penalty too high"
-    assert end_time > block.timestamp, "payday_factory: end time not future"
+    )  # dev: payday_factory: penalty too high
+    assert (
+        end_time > block.timestamp
+    )  # dev: payday_factory: end time not future
 
     duration: uint256 = end_time - block.timestamp
-    assert duration >= MIN_DURATION, "payday_factory: duration too short"
-    assert duration <= MAX_DURATION, "payday_factory: duration too long"
+    assert duration >= MIN_DURATION  # dev: payday_factory: duration too short
+    assert duration <= MAX_DURATION  # dev: payday_factory: duration too long
 
     token_id: uint256 = erc721._counter
     erc721._counter = token_id + 1
@@ -277,7 +275,9 @@ def create_goal(
         config.min_deposit,
         salt=convert(token_id, bytes32),
     )
-    assert goal != empty(address), "payday_factory: blueprint deploy failed"
+    assert goal != empty(
+        address
+    )  # dev: payday_factory: blueprint deploy failed
 
     self.goals[token_id] = goal
     self.token_of[goal] = token_id
@@ -307,10 +307,10 @@ def disable_transfers(token_id: uint256):
     @param token_id The token to soulbind.
     """
     owner: address = erc721._owner_of(token_id)
-    assert owner == msg.sender, "payday_factory: caller is not token owner"
+    assert owner == msg.sender  # dev: payday_factory: caller is not token owner
     assert not self.transfers_disabled[
         token_id
-    ], "payday_factory: transfers already disabled"
+    ]  # dev: payday_factory: transfers already disabled
 
     self.transfers_disabled[token_id] = True
     erc721._approve(empty(address), token_id)
@@ -330,7 +330,7 @@ def transferFrom(owner: address, to: address, token_id: uint256):
     self._check_transfers_enabled(token_id)
     assert erc721._is_approved_or_owner(
         msg.sender, token_id
-    ), "erc721: caller is not token owner or approved"
+    )  # dev: erc721: caller is not token owner or approved
     erc721._transfer(owner, to, token_id)
 
 
@@ -351,7 +351,7 @@ def safeTransferFrom(
     self._check_transfers_enabled(token_id)
     assert erc721._is_approved_or_owner(
         msg.sender, token_id
-    ), "erc721: caller is not token owner or approved"
+    )  # dev: erc721: caller is not token owner or approved
     erc721._safe_transfer(owner, to, token_id, data)
 
 
@@ -392,12 +392,14 @@ def set_asset_allowed(
     @param min_deposit Minimum deposit size copied into new goals.
     """
     ow._check_owner()
-    assert asset != empty(address), "payday_factory: zero asset"
+    assert asset != empty(address)  # dev: payday_factory: zero asset
     if allowed:
-        assert min_deposit != empty(uint256), "payday_factory: zero min deposit"
+        assert min_deposit != empty(
+            uint256
+        )  # dev: payday_factory: zero min deposit
         assert (
             min_target >= min_deposit
-        ), "payday_factory: min target below min deposit"
+        )  # dev: payday_factory: min target below min deposit
 
     self.asset_config[asset] = AssetConfig(
         allowed=allowed,
@@ -419,7 +421,7 @@ def set_treasury(treasury: address):
     @param treasury New fee / yield recipient. Must be nonzero.
     """
     ow._check_owner()
-    assert treasury != empty(address), "payday_factory: zero treasury"
+    assert treasury != empty(address)  # dev: payday_factory: zero treasury
     self.treasury = treasury
     log TreasuryUpdated(treasury=treasury)
 
@@ -439,13 +441,13 @@ def set_uris(
     ow._check_owner()
     assert len(uri_created) != empty(
         uint256
-    ), "payday_factory: empty created uri"
+    )  # dev: payday_factory: empty created uri
     assert len(uri_in_progress) != empty(
         uint256
-    ), "payday_factory: empty progress uri"
+    )  # dev: payday_factory: empty progress uri
     assert len(uri_completed) != empty(
         uint256
-    ), "payday_factory: empty completed uri"
+    )  # dev: payday_factory: empty completed uri
 
     self.uri_created = uri_created
     self.uri_in_progress = uri_in_progress
@@ -465,9 +467,9 @@ def owner_of_goal(goal: address) -> address:
     @param goal Goal contract address.
     @return address Current ERC-721 owner.
     """
-    assert goal != empty(address), "payday_factory: zero goal"
+    assert goal != empty(address)  # dev: payday_factory: zero goal
     token_id: uint256 = self.token_of[goal]
-    assert self.goals[token_id] == goal, "payday_factory: unknown goal"
+    assert self.goals[token_id] == goal  # dev: payday_factory: unknown goal
     return erc721._owner_of(token_id)
 
 
@@ -494,7 +496,7 @@ def _check_transfers_enabled(token_id: uint256):
     """
     assert not self.transfers_disabled[
         token_id
-    ], "payday_factory: transfers disabled"
+    ]  # dev: payday_factory: transfers disabled
 
 
 @internal
@@ -505,5 +507,5 @@ def _check_goal_caller(token_id: uint256):
     @param token_id Token whose linked goal must be the caller.
     """
     goal: address = self.goals[token_id]
-    assert goal != empty(address), "payday_factory: unknown token"
-    assert msg.sender == goal, "payday_factory: caller is not goal"
+    assert goal != empty(address)  # dev: payday_factory: unknown token
+    assert msg.sender == goal  # dev: payday_factory: caller is not goal

@@ -13,7 +13,7 @@ def test_skim_reverts_without_surplus(factory, asset, saver):
     fund_and_approve(asset, saver, goal.address, MIN_DEPOSIT)
     goal.deposit(MIN_DEPOSIT, sender=saver)
 
-    with boa.reverts("payday_goal: no surplus"):
+    with boa.reverts(dev="payday_goal: no surplus"):
         goal.skim_yield()
 
 
@@ -80,8 +80,8 @@ def test_vault_shortfall_blocks_deposit_and_skim(factory, asset, saver, vault):
     vault.simulate_loss(MIN_DEPOSIT // 2)
 
     fund_and_approve(asset, saver, goal.address, MIN_DEPOSIT)
-    with boa.env.prank(saver), boa.reverts("payday_goal: vault shortfall"):
+    with boa.env.prank(saver), boa.reverts(dev="payday_goal: vault shortfall"):
         goal.deposit(MIN_DEPOSIT)
 
-    with boa.reverts("payday_goal: vault shortfall"):
+    with boa.reverts(dev="payday_goal: vault shortfall"):
         goal.skim_yield()

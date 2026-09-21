@@ -72,7 +72,7 @@ def test_non_allowlisted_asset_cannot_create(owner, treasury, asset, saver):
         _, factory = deploy(treasury)
 
     end_time = now() + MIN_DURATION
-    with boa.reverts("payday_factory: asset not allowed"):
+    with boa.reverts(dev="payday_factory: asset not allowed"):
         factory.create_goal(
             asset.address,
             DEFAULT_TARGET,
@@ -85,7 +85,7 @@ def test_non_allowlisted_asset_cannot_create(owner, treasury, asset, saver):
 def test_duration_below_min_reverts(factory, asset, saver):
     """T11: duration cap — too short."""
     end_time = now() + MIN_DURATION - 1
-    with boa.reverts("payday_factory: duration too short"):
+    with boa.reverts(dev="payday_factory: duration too short"):
         factory.create_goal(
             asset.address,
             DEFAULT_TARGET,
@@ -98,7 +98,7 @@ def test_duration_below_min_reverts(factory, asset, saver):
 def test_duration_above_max_reverts(factory, asset, saver):
     """T11: duration cap — too long."""
     end_time = now() + MAX_DURATION + 1
-    with boa.reverts("payday_factory: duration too long"):
+    with boa.reverts(dev="payday_factory: duration too long"):
         factory.create_goal(
             asset.address,
             DEFAULT_TARGET,
@@ -110,7 +110,7 @@ def test_duration_above_max_reverts(factory, asset, saver):
 
 def test_end_time_not_future_reverts(factory, asset, saver):
     """T11: end_time must be in the future."""
-    with boa.reverts("payday_factory: end time not future"):
+    with boa.reverts(dev="payday_factory: end time not future"):
         factory.create_goal(
             asset.address,
             DEFAULT_TARGET,
@@ -123,7 +123,7 @@ def test_end_time_not_future_reverts(factory, asset, saver):
 def test_penalty_above_max_reverts(factory, asset, saver):
     """T11: penalty cap enforced."""
     end_time = now() + MIN_DURATION
-    with boa.env.prank(saver), boa.reverts("payday_factory: penalty too high"):
+    with boa.env.prank(saver), boa.reverts(dev="payday_factory: penalty too high"):
         factory.create_goal(
             asset.address,
             DEFAULT_TARGET,
@@ -135,7 +135,7 @@ def test_penalty_above_max_reverts(factory, asset, saver):
 def test_target_below_min_reverts(factory, asset, saver):
     """T11: per-asset min target enforced."""
     end_time = now() + MIN_DURATION
-    with boa.reverts("payday_factory: target too low"):
+    with boa.reverts(dev="payday_factory: target too low"):
         factory.create_goal(
             asset.address,
             MIN_TARGET - 1,

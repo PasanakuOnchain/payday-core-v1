@@ -34,7 +34,7 @@ def test_complete_reverts_when_under_target(factory, asset, saver):
     goal.deposit(MIN_DEPOSIT, sender=saver)
     assert goal.principal() < goal.TARGET()
 
-    with boa.env.prank(saver), boa.reverts("payday_goal: under target"):
+    with boa.env.prank(saver), boa.reverts(dev="payday_goal: under target"):
         goal.complete()
 
 
@@ -45,7 +45,7 @@ def test_complete_reverts_when_closed(factory, asset, saver):
     goal.deposit(goal.TARGET(), sender=saver)
     goal.complete(sender=saver)
 
-    with boa.env.prank(saver), boa.reverts("payday_goal: closed"):
+    with boa.env.prank(saver), boa.reverts(dev="payday_goal: closed"):
         goal.complete()
 
 
@@ -55,5 +55,5 @@ def test_non_owner_cannot_complete(factory, asset, saver, other):
     fund_and_approve(asset, saver, goal.address, goal.TARGET())
     goal.deposit(goal.TARGET(), sender=saver)
 
-    with boa.env.prank(other), boa.reverts("payday_goal: caller is not nft owner"):
+    with boa.env.prank(other), boa.reverts(dev="payday_goal: caller is not nft owner"):
         goal.complete()

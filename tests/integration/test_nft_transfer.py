@@ -15,7 +15,7 @@ def test_new_owner_can_deposit_old_cannot(factory, asset, saver, other):
     assert factory.owner_of_goal(goal.address) == other
 
     fund_and_approve(asset, saver, goal.address, MIN_DEPOSIT)
-    with boa.env.prank(saver), boa.reverts("payday_goal: caller is not nft owner"):
+    with boa.env.prank(saver), boa.reverts(dev="payday_goal: caller is not nft owner"):
         goal.deposit(MIN_DEPOSIT)
 
     fund_and_approve(asset, other, goal.address, MIN_DEPOSIT)

@@ -30,9 +30,9 @@ def test_uri_created_in_progress_completed(factory, asset, saver):
 def test_non_goal_cannot_set_uri(factory, asset, saver, other):
     _, token_id = create_goal(factory, asset, saver)
     with boa.env.prank(other):
-        with boa.reverts("payday_factory: caller is not goal"):
+        with boa.reverts(dev="payday_factory: caller is not goal"):
             factory.set_goal_uri_in_progress(token_id)
-        with boa.reverts("payday_factory: caller is not goal"):
+        with boa.reverts(dev="payday_factory: caller is not goal"):
             factory.set_goal_uri_completed(token_id)
 
 
@@ -49,10 +49,10 @@ def test_owner_disable_transfers_blocks_transfer_deposit_still_works(
     assert logs[0].token_id == token_id
     assert logs[0].owner == saver
 
-    with boa.env.prank(saver), boa.reverts("payday_factory: transfers disabled"):
+    with boa.env.prank(saver), boa.reverts(dev="payday_factory: transfers disabled"):
         factory.transferFrom(saver, other, token_id)
 
-    with boa.env.prank(saver), boa.reverts("payday_factory: transfers disabled"):
+    with boa.env.prank(saver), boa.reverts(dev="payday_factory: transfers disabled"):
         factory.safeTransferFrom(saver, other, token_id)
 
     fund_and_approve(asset, saver, goal.address, MIN_DEPOSIT)
@@ -66,7 +66,7 @@ def test_disable_transfers_cannot_be_undone(factory, asset, saver):
     _, token_id = create_goal(factory, asset, saver)
     factory.disable_transfers(token_id, sender=saver)
 
-    with boa.reverts("payday_factory: transfers already disabled"):
+    with boa.reverts(dev="payday_factory: transfers already disabled"):
         factory.disable_transfers(token_id, sender=saver)
 
     assert factory.transfers_disabled(token_id) is True
@@ -75,7 +75,7 @@ def test_disable_transfers_cannot_be_undone(factory, asset, saver):
 def test_non_owner_cannot_soulbind(factory, asset, saver, other):
     """T16: non-owner cannot soulbind."""
     _, token_id = create_goal(factory, asset, saver)
-    with boa.reverts("payday_factory: caller is not token owner"):
+    with boa.reverts(dev="payday_factory: caller is not token owner"):
         factory.disable_transfers(token_id, sender=other)
     assert factory.transfers_disabled(token_id) is False
 
@@ -88,5 +88,5 @@ def test_soulbind_clears_approval(factory, asset, saver, other):
     factory.disable_transfers(token_id, sender=saver)
     assert factory.getApproved(token_id) == "0x0000000000000000000000000000000000000000"
 
-    with boa.env.prank(other), boa.reverts("payday_factory: transfers disabled"):
+    with boa.env.prank(other), boa.reverts(dev="payday_factory: transfers disabled"):
         factory.transferFrom(saver, other, token_id)

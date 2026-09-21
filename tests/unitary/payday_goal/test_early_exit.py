@@ -79,7 +79,7 @@ def test_early_exit_reverts_when_at_or_above_target(factory, asset, saver):
     fund_and_approve(asset, saver, goal.address, DEFAULT_TARGET)
     goal.deposit(DEFAULT_TARGET, sender=saver)
 
-    with boa.env.prank(saver), boa.reverts("payday_goal: use complete"):
+    with boa.env.prank(saver), boa.reverts(dev="payday_goal: use complete"):
         goal.early_exit()
 
 
@@ -90,7 +90,7 @@ def test_early_exit_reverts_when_closed(factory, asset, saver):
     goal.deposit(MIN_DEPOSIT, sender=saver)
     goal.early_exit(sender=saver)
 
-    with boa.env.prank(saver), boa.reverts("payday_goal: closed"):
+    with boa.env.prank(saver), boa.reverts(dev="payday_goal: closed"):
         goal.early_exit()
 
 
@@ -100,7 +100,7 @@ def test_non_owner_cannot_early_exit(factory, asset, saver, other):
     fund_and_approve(asset, saver, goal.address, MIN_DEPOSIT)
     goal.deposit(MIN_DEPOSIT, sender=saver)
 
-    with boa.env.prank(other), boa.reverts("payday_goal: caller is not nft owner"):
+    with boa.env.prank(other), boa.reverts(dev="payday_goal: caller is not nft owner"):
         goal.early_exit()
 
 
