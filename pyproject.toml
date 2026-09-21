@@ -1,0 +1,13 @@
+[project]
+name = "payday-core-v1"
+version = "0.1.0"
+description = "Onchain commitment-savings vaults"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "mamushi>=0.1.2",
+    "moccasin>=0.4.4",
+    "ruff>=0.16.8",
+    "snekmate>=0.1.2",
+    "vyper>=0.4.3",
+]

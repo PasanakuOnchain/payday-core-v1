@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "vyper-best-practices": {
+      "source": "rafael-abuawad/skills",
+      "sourceType": "github",
+      "skillPath": "vyper-best-practices/SKILL.md",
+      "computedHash": "4ced766a5ca7326f84df5c4713ac66c348772faec5d556b6443adaf565e14b37"
+    },
+    "vyper-testing": {
+      "source": "rafael-abuawad/skills",
+      "sourceType": "github",
+      "skillPath": "vyper-testing/SKILL.md",
+      "computedHash": "4f83e46909717f374e300c5dc0e1dea05cfc879ae3781ce2c6e402f018c59fc8"
+    }
+  }
+}
