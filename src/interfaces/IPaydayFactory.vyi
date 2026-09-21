@@ -1,0 +1,317 @@
+# Structs
+
+struct AssetConfig:
+    allowed: bool
+    min_target: uint256
+    min_deposit: uint256
+
+
+# Events
+
+event GoalCreated:
+    goal: address
+    token_id: uint256
+    creator: address
+    asset: address
+    target: uint256
+    start_time: uint256
+    end_time: uint256
+    start_penalty_bps: uint256
+
+
+event TransfersDisabled:
+    token_id: uint256
+    owner: address
+
+
+event AssetAllowlistUpdated:
+    asset: address
+    allowed: bool
+    min_target: uint256
+    min_deposit: uint256
+
+
+event TreasuryUpdated:
+    treasury: address
+
+
+event UrisUpdated:
+    uri_created: String[432]
+    uri_in_progress: String[432]
+    uri_completed: String[432]
+
+
+event GoalUriUpdated:
+    token_id: uint256
+    uri: String[432]
+
+
+event OwnershipTransferred:
+    previous_owner: address
+    new_owner: address
+
+
+event RoleMinterChanged:
+    minter: address
+    status: bool
+
+
+event Approval:
+    owner: address
+    approved: address
+    token_id: uint256
+
+
+event ApprovalForAll:
+    owner: address
+    operator: address
+    approved: bool
+
+
+event Transfer:
+    sender: address
+    receiver: address
+    token_id: uint256
+
+
+event MetadataUpdate:
+    _tokenId: uint256
+
+
+# Functions
+
+@view
+@external
+def owner() -> address:
+    ...
+
+
+@view
+@external
+def name() -> String[25]:
+    ...
+
+
+@view
+@external
+def symbol() -> String[5]:
+    ...
+
+
+@view
+@external
+def balanceOf(owner: address) -> uint256:
+    ...
+
+
+@view
+@external
+def ownerOf(token_id: uint256) -> address:
+    ...
+
+
+@payable
+@external
+def approve(to: address, token_id: uint256):
+    ...
+
+
+@view
+@external
+def getApproved(token_id: uint256) -> address:
+    ...
+
+
+@external
+def setApprovalForAll(operator: address, approved: bool):
+    ...
+
+
+@view
+@external
+def isApprovedForAll(arg0: address, arg1: address) -> bool:
+    ...
+
+
+@view
+@external
+def tokenURI(token_id: uint256) -> String[512]:
+    ...
+
+
+@view
+@external
+def totalSupply() -> uint256:
+    ...
+
+
+@view
+@external
+def tokenByIndex(index: uint256) -> uint256:
+    ...
+
+
+@view
+@external
+def tokenOfOwnerByIndex(owner: address, index: uint256) -> uint256:
+    ...
+
+
+@view
+@external
+def supportsInterface(interface_id: bytes4) -> bool:
+    ...
+
+
+@external
+def transfer_ownership(new_owner: address):
+    ...
+
+
+@external
+def renounce_ownership():
+    ...
+
+
+@external
+def create_goal(asset: address, target: uint256, end_time: uint256, start_penalty_bps: uint256, vault: address) -> (address, uint256):
+    ...
+
+
+@external
+def disable_transfers(token_id: uint256):
+    ...
+
+
+@payable
+@external
+def transferFrom(owner: address, to: address, token_id: uint256):
+    ...
+
+
+@payable
+@external
+def safeTransferFrom(owner: address, to: address, token_id: uint256, data: Bytes[1024]):
+    ...
+
+
+@external
+def set_goal_uri_in_progress(token_id: uint256):
+    ...
+
+
+@external
+def set_goal_uri_completed(token_id: uint256):
+    ...
+
+
+@external
+def set_asset_allowed(asset: address, allowed: bool, min_target: uint256, min_deposit: uint256):
+    ...
+
+
+@external
+def set_treasury(treasury: address):
+    ...
+
+
+@external
+def set_uris(uri_created: String[432], uri_in_progress: String[432], uri_completed: String[432]):
+    ...
+
+
+@view
+@external
+def owner_of_goal(goal: address) -> address:
+    ...
+
+
+@view
+@external
+def is_goal(goal: address) -> bool:
+    ...
+
+
+@view
+@external
+def BPS_DENOMINATOR() -> uint256:
+    ...
+
+
+@view
+@external
+def MAX_START_PENALTY_BPS() -> uint256:
+    ...
+
+
+@view
+@external
+def DAY() -> uint256:
+    ...
+
+
+@view
+@external
+def MIN_DURATION() -> uint256:
+    ...
+
+
+@view
+@external
+def MAX_DURATION() -> uint256:
+    ...
+
+
+@view
+@external
+def GOAL_BLUEPRINT() -> address:
+    ...
+
+
+@view
+@external
+def treasury() -> address:
+    ...
+
+
+@view
+@external
+def uri_created() -> String[432]:
+    ...
+
+
+@view
+@external
+def uri_in_progress() -> String[432]:
+    ...
+
+
+@view
+@external
+def uri_completed() -> String[432]:
+    ...
+
+
+@view
+@external
+def asset_config(arg0: address) -> AssetConfig:
+    ...
+
+
+@view
+@external
+def goals(arg0: uint256) -> address:
+    ...
+
+
+@view
+@external
+def token_of(arg0: address) -> uint256:
+    ...
+
+
+@view
+@external
+def transfers_disabled(arg0: uint256) -> bool:
+    ...
+

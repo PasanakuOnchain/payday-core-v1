@@ -1,12 +1,40 @@
-from src import Counter
 from moccasin.boa_tools import VyperContract
 
-def deploy() -> VyperContract:
-    counter: VyperContract = Counter.deploy()
-    print("Starting count: ", counter.number())
-    counter.increment()
-    print("Ending count: ", counter.number())
-    return counter
+from src import payday_factory, payday_goal
+from tests.utils.constants import (
+    URI_COMPLETED,
+    URI_CREATED,
+    URI_IN_PROGRESS,
+)
+
+
+def deploy(
+    treasury: str,
+    uri_created: str = URI_CREATED,
+    uri_in_progress: str = URI_IN_PROGRESS,
+    uri_completed: str = URI_COMPLETED,
+) -> tuple[VyperContract, VyperContract]:
+    """Deploy the goal blueprint and factory. Returns (blueprint, factory)."""
+    blueprint: VyperContract = payday_goal.deploy_as_blueprint()
+    factory: VyperContract = payday_factory.deploy(
+        blueprint.address,
+        treasury,
+        uri_created,
+        uri_in_progress,
+        uri_completed,
+    )
+    return blueprint, factory
+
 
 def moccasin_main() -> VyperContract:
-    return deploy()
+    import boa
+
+    treasury = boa.env.eoa
+    blueprint, factory = deploy(treasury)
+    print("goal blueprint:", blueprint.address)
+    print("factory:", factory.address)
+    print("treasury:", factory.treasury())
+    print("uri_created:", factory.uri_created())
+    print("uri_in_progress:", factory.uri_in_progress())
+    print("uri_completed:", factory.uri_completed())
+    return factory

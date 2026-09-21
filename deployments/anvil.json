@@ -1,0 +1,13 @@
+{
+  "chain": "anvil",
+  "chainId": 31337,
+  "goalBlueprint": null,
+  "factory": null,
+  "treasury": null,
+  "uris": {
+    "created": "ipfs://payday/v1/created.json",
+    "inProgress": "ipfs://payday/v1/in-progress.json",
+    "completed": "ipfs://payday/v1/completed.json"
+  },
+  "assets": []
+}
