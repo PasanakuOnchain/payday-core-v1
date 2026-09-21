@@ -57,3 +57,37 @@ def test_non_owner_cannot_complete(factory, asset, saver, other):
 
     with boa.env.prank(other), boa.reverts(dev="payday_goal: caller is not nft owner"):
         goal.complete()
+
+
+def test_complete_when_principal_exceeds_target(factory, asset, saver):
+    goal, token_id = create_goal(factory, asset, saver)
+    overshoot = goal.TARGET() + MIN_DEPOSIT
+    fund_and_approve(asset, saver, goal.address, overshoot)
+    goal.deposit(overshoot, sender=saver)
+
+    saver_before = asset.balanceOf(saver)
+    goal.complete(sender=saver)
+
+    assert goal.closed() is True
+    assert goal.principal() == 0
+    assert asset.balanceOf(saver) == saver_before + overshoot
+    assert factory.tokenURI(token_id) == URI_COMPLETED
+
+
+def test_complete_donated_surplus_goes_to_treasury(factory, asset, saver, treasury):
+    goal, _ = create_goal(factory, asset, saver)
+    target = goal.TARGET()
+    fund_and_approve(asset, saver, goal.address, target)
+    goal.deposit(target, sender=saver)
+
+    surplus = MIN_DEPOSIT
+    asset.mint(goal.address, surplus)
+
+    saver_before = asset.balanceOf(saver)
+    treasury_before = asset.balanceOf(treasury)
+    goal.complete(sender=saver)
+
+    assert asset.balanceOf(saver) == saver_before + target
+    assert asset.balanceOf(treasury) == treasury_before + surplus
+    assert asset.balanceOf(goal.address) == 0
+    assert goal.closed() is True

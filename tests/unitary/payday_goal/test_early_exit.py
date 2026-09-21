@@ -122,3 +122,25 @@ def test_early_exit_dust_rounds_fee_down(factory, asset, saver, treasury):
     treasury_before = asset.balanceOf(treasury)
     goal.early_exit(sender=saver)
     assert asset.balanceOf(treasury) == treasury_before + fee
+
+
+def test_early_exit_donated_surplus_goes_to_treasury(factory, asset, saver, treasury):
+    goal, _ = create_goal(factory, asset, saver)
+    fund_and_approve(asset, saver, goal.address, MIN_DEPOSIT)
+    goal.deposit(MIN_DEPOSIT, sender=saver)
+
+    surplus = MIN_DEPOSIT
+    asset.mint(goal.address, surplus)
+
+    fee, net = goal.preview_early_exit()
+    assert fee + net == MIN_DEPOSIT
+
+    treasury_before = asset.balanceOf(treasury)
+    saver_before = asset.balanceOf(saver)
+    goal.early_exit(sender=saver)
+
+    assert asset.balanceOf(saver) == saver_before + net
+    assert asset.balanceOf(treasury) == treasury_before + fee + surplus
+    assert asset.balanceOf(goal.address) == 0
+    assert goal.closed() is True
+    assert goal.principal() == 0
