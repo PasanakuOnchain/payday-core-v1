@@ -127,9 +127,9 @@ def test_create_loan(controller, collateral_token, amounts):
 ```python
 boa.env.enable_fast_mode()  # top of conftest.py
 
+
 @pytest.fixture(scope="module")
-def controller(market, admin):
-    ...
+def controller(market, admin): ...
 ```
 
 - `scope="module"` — expensive deployments (protocol, markets)

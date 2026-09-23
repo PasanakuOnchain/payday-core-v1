@@ -125,6 +125,7 @@ function setUp() public {
 def contract():
     return MyContract()
 
+
 @pytest.fixture
 def alice():
     addr = boa.env.generate_address("alice")

@@ -232,6 +232,7 @@ deployer_script = "script/mocks/deploy_mock_token.py"
 from tests.mocks.deployers import MOCK_ERC20
 from moccasin.boa_tools import VyperContract
 
+
 def moccasin_main() -> VyperContract:
     return MOCK_ERC20.deploy(18)
 ```

@@ -83,9 +83,11 @@ DRY between `mox run deploy` and tests:
 from src import collection, factory
 from moccasin.boa_tools import VyperContract
 
+
 def deploy() -> VyperContract:
     blueprint = collection.deploy_as_blueprint()
     return factory.deploy(blueprint.address)
+
 
 def moccasin_main() -> VyperContract:
     return deploy()
@@ -95,6 +97,7 @@ def moccasin_main() -> VyperContract:
 # tests/conftest.py
 import pytest
 from script.deploy import deploy
+
 
 @pytest.fixture(scope="module")
 def factory_contract():
@@ -108,13 +111,16 @@ For factory-deployed contracts (e.g. `create_from_blueprint`):
 ```python
 from src import collection, factory
 
+
 @pytest.fixture(scope="module")
 def collection_blueprint():
     return collection.deploy_as_blueprint()
 
+
 @pytest.fixture(scope="module")
 def factory_contract(collection_blueprint):
     return factory.deploy(collection_blueprint.address)
+
 
 @pytest.fixture(scope="module")
 def deployed_collection(factory_contract):
@@ -145,6 +151,7 @@ Use in tests/scripts:
 from moccasin.config import get_config
 from moccasin.boa_tools import VyperContract
 
+
 def test_against_usdc():
     network = get_config().get_active_network()
     usdc: VyperContract = network.manifest_named("usdc")
@@ -162,6 +169,7 @@ deployer_script = "script/mocks/deploy_price_feed.py"
 # script/mocks/deploy_price_feed.py
 from tests.mocks.deployers import MOCK_ORACLE
 from moccasin.boa_tools import VyperContract
+
 
 def moccasin_main() -> VyperContract:
     return MOCK_ORACLE.deploy(18, 3000 * 10**18)
@@ -184,6 +192,7 @@ MOCK_ORACLE = boa.load_partial("tests/mocks/MockOracle.vy")
 ```python
 # tests/conftest.py
 from tests.mocks.deployers import MOCK_ERC20
+
 
 @pytest.fixture(scope="module")
 def mock_token():
@@ -237,6 +246,6 @@ Always type contract handles:
 ```python
 from moccasin.boa_tools import VyperContract
 
-def deploy() -> VyperContract:
-    ...
+
+def deploy() -> VyperContract: ...
 ```

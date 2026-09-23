@@ -97,17 +97,21 @@ no_shrink = settings.register_profile(
 )
 settings.load_profile("no-shrink")
 
+
 @pytest.fixture(scope="module")
 def proto():
     return Llamalend()
+
 
 @pytest.fixture(scope="module")
 def admin(proto):
     return proto.admin
 
+
 @pytest.fixture(scope="module", params=["mint", "lending"])
 def market_type(request):
     return request.param
+
 
 @pytest.fixture(scope="module", params=[2, 18])
 def collateral_decimals(request):
@@ -175,6 +179,7 @@ Common helpers in `tests/utils/__init__.py`:
 def max_approve(token, spender, sender):
     token.approve(spender, 2**256 - 1, sender=sender)
 
+
 def filter_logs(contract, event_name: str):
     return [log for log in contract.get_logs() if log.event_type.name == event_name]
 ```
@@ -208,9 +213,9 @@ Register profiles in conftest, use in `tests/fuzz/`:
 ```python
 from hypothesis import given, strategies as st
 
+
 @given(amount=st.integers(min_value=1, max_value=10**21))
-def test_withdraw_fuzz(vault, amount):
-    ...
+def test_withdraw_fuzz(vault, amount): ...
 ```
 
 ## Mocks in Curve vs Moccasin projects
