@@ -51,8 +51,9 @@ def test_transfer_ownership_waits_for_accept(factory, owner, other):
 
 def test_accept_ownership_by_stranger_reverts(factory, owner, other, saver):
     factory.transfer_ownership(other, sender=owner)
-    with boa.env.prank(saver), boa.reverts(
-        "ownable_2step: caller is not the new owner"
+    with (
+        boa.env.prank(saver),
+        boa.reverts("ownable_2step: caller is not the new owner"),
     ):
         factory.accept_ownership()
     assert factory.owner() == owner
@@ -64,8 +65,9 @@ def test_transfer_ownership_to_zero_clears_pending(factory, owner, other):
     assert factory.pending_owner() == EMPTY
     assert factory.owner() == owner
 
-    with boa.env.prank(other), boa.reverts(
-        "ownable_2step: caller is not the new owner"
+    with (
+        boa.env.prank(other),
+        boa.reverts("ownable_2step: caller is not the new owner"),
     ):
         factory.accept_ownership()
 
@@ -76,13 +78,17 @@ def test_set_asset_allowed_zero_asset_reverts(factory, owner):
 
 
 def test_set_asset_allowed_zero_min_deposit_reverts(factory, owner, asset):
-    with boa.env.prank(owner), boa.reverts(dev="payday_factory: zero min deposit"):
+    with (
+        boa.env.prank(owner),
+        boa.reverts(dev="payday_factory: zero min deposit # nosplit"),
+    ):
         factory.set_asset_allowed(asset.address, True, MIN_TARGET, 0)
 
 
 def test_set_asset_allowed_min_target_below_min_deposit_reverts(factory, owner, asset):
-    with boa.env.prank(owner), boa.reverts(
-        dev="payday_factory: min target below min deposit"
+    with (
+        boa.env.prank(owner),
+        boa.reverts(dev="payday_factory: min target below min deposit # nosplit"),
     ):
         factory.set_asset_allowed(asset.address, True, MIN_DEPOSIT - 1, MIN_DEPOSIT)
 
@@ -104,4 +110,3 @@ def test_set_asset_allowed_revoke_then_create_goal_reverts(
             end_time,
             sender=saver,
         )
-

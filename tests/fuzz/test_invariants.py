@@ -70,7 +70,9 @@ class GoalStateMachine(RuleBasedStateMachine):
         self.deposited += amount
 
     @rule()
-    @precondition(lambda self: not self.closed and self.goal.principal() >= self.goal.TARGET())
+    @precondition(
+        lambda self: not self.closed and self.goal.principal() >= self.goal.TARGET()
+    )
     def complete(self) -> None:
         owner_before = self.asset.balanceOf(self.nft_owner)
         treasury_before = self.asset.balanceOf(self.treasury)
@@ -81,8 +83,7 @@ class GoalStateMachine(RuleBasedStateMachine):
 
     @rule()
     @precondition(
-        lambda self: not self.closed
-        and 0 < self.goal.principal() < self.goal.TARGET()
+        lambda self: not self.closed and 0 < self.goal.principal() < self.goal.TARGET()
     )
     def early_exit(self) -> None:
         owner_before = self.asset.balanceOf(self.nft_owner)

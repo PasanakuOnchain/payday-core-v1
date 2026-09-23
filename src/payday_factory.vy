@@ -289,9 +289,7 @@ def disable_transfers(token_id: uint256):
     """
     owner: address = erc721._owner_of(token_id)
     assert owner == msg.sender  # dev: payday_factory: caller is not token owner
-    assert not self.transfers_disabled[
-        token_id
-    ]  # dev: payday_factory: transfers already disabled
+    assert not self.transfers_disabled[token_id]  # dev: payday_factory: transfers already disabled # nosplit
 
     self.transfers_disabled[token_id] = True
     erc721._approve(empty(address), token_id)
@@ -309,9 +307,7 @@ def transferFrom(owner: address, to: address, token_id: uint256):
     @param token_id Token to transfer.
     """
     self._check_transfers_enabled(token_id)
-    assert erc721._is_approved_or_owner(
-        msg.sender, token_id
-    )  # dev: erc721: caller is not token owner or approved
+    assert erc721._is_approved_or_owner(msg.sender, token_id)  # dev: erc721: caller is not token owner or approved # nosplit
     erc721._transfer(owner, to, token_id)
 
 
@@ -353,12 +349,8 @@ def set_asset_allowed(
     ow._check_owner()
     assert asset != empty(address)  # dev: payday_factory: zero asset
     if allowed:
-        assert min_deposit != empty(
-            uint256
-        )  # dev: payday_factory: zero min deposit
-        assert (
-            min_target >= min_deposit
-        )  # dev: payday_factory: min target below min deposit
+        assert min_deposit != empty(uint256)  # dev: payday_factory: zero min deposit # nosplit
+        assert (min_target >= min_deposit)  # dev: payday_factory: min target below min deposit # nosplit
 
     self.asset_config[asset] = AssetConfig(
         allowed=allowed,
@@ -440,6 +432,4 @@ def _check_transfers_enabled(token_id: uint256):
     @dev Reverts if `token_id` has been soulbound.
     @param token_id Token to check.
     """
-    assert not self.transfers_disabled[
-        token_id
-    ]  # dev: payday_factory: transfers disabled
+    assert not self.transfers_disabled[token_id]  # dev: payday_factory: transfers disabled # nosplit
