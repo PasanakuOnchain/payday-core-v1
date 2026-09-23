@@ -5,10 +5,10 @@ from src import payday_goal
 
 from tests.utils import now
 from tests.utils.constants import (
-    DEFAULT_START_PENALTY_BPS,
     DEFAULT_TARGET,
     MIN_DEPOSIT,
     MIN_DURATION,
+    START_PENALTY_BPS,
 )
 
 EMPTY = "0x0000000000000000000000000000000000000000"
@@ -34,7 +34,7 @@ def _deploy(
         target,
         start,
         end,
-        DEFAULT_START_PENALTY_BPS,
+        START_PENALTY_BPS,
         0,
         min_deposit,
     )

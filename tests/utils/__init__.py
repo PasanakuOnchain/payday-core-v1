@@ -5,7 +5,6 @@ from moccasin.boa_tools import VyperContract
 
 from src import payday_goal
 from tests.utils.constants import (
-    DEFAULT_START_PENALTY_BPS,
     DEFAULT_TARGET,
     MIN_DURATION,
 )
@@ -29,7 +28,6 @@ def create_goal(
     saver: str,
     target: int = DEFAULT_TARGET,
     duration: int = MIN_DURATION,
-    penalty: int = DEFAULT_START_PENALTY_BPS,
     vault: str | None = None,
 ) -> tuple[VyperContract, int]:
     """Create a goal as `saver` and bind a `payday_goal` handle."""
@@ -37,7 +35,7 @@ def create_goal(
     vault_addr = vault if vault is not None else EMPTY_ADDRESS
     with boa.env.prank(saver):
         addr, token_id = factory.create_goal(
-            asset.address, target, end_time, penalty, vault_addr
+            asset.address, target, end_time, vault_addr
         )
     return payday_goal.at(addr), int(token_id)
 

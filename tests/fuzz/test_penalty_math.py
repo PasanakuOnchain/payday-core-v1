@@ -8,12 +8,11 @@ from tests.utils import create_goal, fund_and_approve, now
 from tests.utils.constants import (
     BPS_DENOMINATOR,
     DAY,
-    DEFAULT_START_PENALTY_BPS,
     DEFAULT_TARGET,
     MAX_DURATION,
-    MAX_START_PENALTY_BPS,
     MIN_DEPOSIT,
     MIN_DURATION,
+    START_PENALTY_BPS,
 )
 
 SETTINGS = settings(
@@ -39,31 +38,26 @@ def test_penalty_matches_linear_formula(factory, asset, saver, elapsed):
 
         current = now()
         if current <= start:
-            expected = DEFAULT_START_PENALTY_BPS
+            expected = START_PENALTY_BPS
         elif current >= end:
             expected = 0
         else:
-            expected = DEFAULT_START_PENALTY_BPS * (end - current) // duration
+            expected = START_PENALTY_BPS * (end - current) // duration
 
         assert goal.penalty_bps() == expected
 
 
 @given(
     elapsed=st.integers(min_value=0, max_value=MAX_DURATION + DAY),
-    penalty=st.integers(min_value=0, max_value=MAX_START_PENALTY_BPS),
     duration=st.integers(min_value=MIN_DURATION, max_value=MAX_DURATION),
 )
 @SETTINGS
-def test_penalty_bps_stays_within_bounds(
-    factory, asset, saver, elapsed, penalty, duration
-):
+def test_penalty_bps_stays_within_bounds(factory, asset, saver, elapsed, duration):
     with boa.env.anchor():
-        goal, _ = create_goal(
-            factory, asset, saver, duration=duration, penalty=penalty
-        )
+        goal, _ = create_goal(factory, asset, saver, duration=duration)
         boa.env.time_travel(seconds=elapsed)
         bps = goal.penalty_bps()
-        assert 0 <= bps <= penalty
+        assert 0 <= bps <= START_PENALTY_BPS
         assert bps <= goal.START_PENALTY_BPS()
 
 

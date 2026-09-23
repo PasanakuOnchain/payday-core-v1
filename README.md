@@ -26,7 +26,7 @@ One goal = one NFT = one allowlisted ERC-20. Transfer of the NFT transfers contr
 
 | Action | Who | Rule |
 |--------|-----|------|
-| `create_goal` | anyone | Asset allowlisted; duration and penalty caps |
+| `create_goal` | anyone | Asset allowlisted; duration caps; penalty is factory-fixed |
 | `deposit` | NFT owner | Anytime, `amount >= min_deposit` |
 | `complete` | NFT owner | `principal >= target`; 100% of principal to owner |
 | `early_exit` | NFT owner | `principal < target`; fee to treasury, net to owner; closes |
@@ -44,8 +44,7 @@ Values in `payday_factory.vy` / `tests/utils/constants.py`:
 | Param | Value |
 |-------|--------|
 | NFT name / symbol | `Payday Goal` / `PAYD` (snekmate symbol max 5 chars) |
-| Suggested `start_penalty_bps` | 2000 (20%) |
-| `MAX_START_PENALTY_BPS` | 5000 |
+| `START_PENALTY_BPS` | 8000 (80%), set by the factory on every goal |
 | Min duration | 30 days |
 | Max duration | 730 days |
 | Min target / min deposit | per-asset, via `set_asset_allowed` |
@@ -55,10 +54,12 @@ Treasury is set at factory deploy. Existing clones keep the treasury snapshotted
 
 ### Penalty
 
+The factory writes `START_PENALTY_BPS` (8000) onto every goal. Callers do not choose it. The clone stores that value at creation.
+
 ```
 # now in [start_time, end_time):
-penalty_bps = start_penalty_bps * (end_time - now) // (end_time - start_time)
-# now <= start_time: start_penalty_bps
+penalty_bps = START_PENALTY_BPS * (end_time - now) // (end_time - start_time)
+# now <= start_time: START_PENALTY_BPS
 # now >= end_time: 0
 ```
 
@@ -124,9 +125,9 @@ Write live addresses into `deployments/<chain>.json` after a broadcast. Placehol
 goal, token_id = factory.create_goal(
     asset,
     target,
-    end_time,           # unix; duration in [30d, 730d]
-    start_penalty_bps,  # <= 5000
+    end_time,  # unix; duration in [30d, 730d]
     # vault=empty by default
+    # penalty is always factory.START_PENALTY_BPS (8000)
 )
 ```
 

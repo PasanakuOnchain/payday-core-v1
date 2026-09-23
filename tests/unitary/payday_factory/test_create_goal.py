@@ -1,17 +1,16 @@
-"""T1, T10, T11 — factory create_goal, allowlist, duration/penalty caps."""
+"""T1, T10, T11 — factory create_goal, allowlist, and duration caps."""
 
 import boa
 
 from tests.utils import create_goal, filter_logs, now
 from tests.utils.constants import (
-    DEFAULT_START_PENALTY_BPS,
     DEFAULT_TARGET,
     MAX_DURATION,
-    MAX_START_PENALTY_BPS,
     MIN_DEPOSIT,
     MIN_DURATION,
     MIN_TARGET,
     NAME,
+    START_PENALTY_BPS,
     SYMBOL,
     URI_CREATED,
 )
@@ -39,7 +38,8 @@ def test_create_goal_deploys_blueprint_and_mints_nft(factory, asset, saver):
     assert goal.FACTORY() == factory.address
     assert goal.ASSET() == asset.address
     assert goal.TARGET() == DEFAULT_TARGET
-    assert goal.START_PENALTY_BPS() == DEFAULT_START_PENALTY_BPS
+    assert goal.START_PENALTY_BPS() == START_PENALTY_BPS
+    assert goal.START_PENALTY_BPS() == factory.START_PENALTY_BPS()
     assert goal.TOKEN_ID() == token_id
     assert goal.MIN_DEPOSIT() == MIN_DEPOSIT
     assert goal.principal() == 0
@@ -51,6 +51,7 @@ def test_create_goal_deploys_blueprint_and_mints_nft(factory, asset, saver):
     assert created_logs[0].token_id == token_id
     assert created_logs[0].creator == saver
     assert created_logs[0].asset == asset.address
+    assert created_logs[0].start_penalty_bps == START_PENALTY_BPS
 
 
 def test_token_uri_is_created_pack_at_mint(factory, asset, saver):
@@ -77,7 +78,6 @@ def test_non_allowlisted_asset_cannot_create(owner, treasury, asset, saver):
             asset.address,
             DEFAULT_TARGET,
             end_time,
-            DEFAULT_START_PENALTY_BPS,
             sender=saver,
         )
 
@@ -90,7 +90,6 @@ def test_duration_below_min_reverts(factory, asset, saver):
             asset.address,
             DEFAULT_TARGET,
             end_time,
-            DEFAULT_START_PENALTY_BPS,
             sender=saver,
         )
 
@@ -103,7 +102,6 @@ def test_duration_above_max_reverts(factory, asset, saver):
             asset.address,
             DEFAULT_TARGET,
             end_time,
-            DEFAULT_START_PENALTY_BPS,
             sender=saver,
         )
 
@@ -115,20 +113,7 @@ def test_end_time_not_future_reverts(factory, asset, saver):
             asset.address,
             DEFAULT_TARGET,
             now(),
-            DEFAULT_START_PENALTY_BPS,
             sender=saver,
-        )
-
-
-def test_penalty_above_max_reverts(factory, asset, saver):
-    """T11: penalty cap enforced."""
-    end_time = now() + MIN_DURATION
-    with boa.env.prank(saver), boa.reverts(dev="payday_factory: penalty too high"):
-        factory.create_goal(
-            asset.address,
-            DEFAULT_TARGET,
-            end_time,
-            MAX_START_PENALTY_BPS + 1,
         )
 
 
@@ -140,21 +125,19 @@ def test_target_below_min_reverts(factory, asset, saver):
             asset.address,
             MIN_TARGET - 1,
             end_time,
-            DEFAULT_START_PENALTY_BPS,
             sender=saver,
         )
 
 
-def test_max_penalty_and_duration_succeed(factory, asset, saver):
-    """T11: boundaries of duration and penalty caps succeed."""
+def test_max_duration_uses_factory_penalty(factory, asset, saver):
+    """T11: max duration succeeds and the factory sets the penalty."""
     goal, _ = create_goal(
         factory,
         asset,
         saver,
         duration=MAX_DURATION,
-        penalty=MAX_START_PENALTY_BPS,
     )
-    assert goal.START_PENALTY_BPS() == MAX_START_PENALTY_BPS
+    assert goal.START_PENALTY_BPS() == START_PENALTY_BPS
     assert goal.END_TIME() - goal.START_TIME() == MAX_DURATION
 
 

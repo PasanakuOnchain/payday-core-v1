@@ -57,8 +57,8 @@ exports: (
 BPS_DENOMINATOR: public(constant(uint256)) = 10_000
 
 
-# @dev Maximum `start_penalty_bps` accepted by `create_goal` (50%).
-MAX_START_PENALTY_BPS: public(constant(uint256)) = 5_000
+# @dev Penalty in bps written onto every new goal at `start_time` (80%).
+START_PENALTY_BPS: public(constant(uint256)) = 8_000
 
 
 # @dev Number of seconds in one day; used to express duration caps.
@@ -227,7 +227,6 @@ def create_goal(
     asset: address,
     target: uint256,
     end_time: uint256,
-    start_penalty_bps: uint256,
     vault: address = empty(address),
 ) -> (address, uint256):
     """
@@ -235,10 +234,10 @@ def create_goal(
     @notice The NFT owner alone may deposit, complete, or early-exit.
             Transferring the NFT transfers control of the goal.
             `vault` defaults to `empty(address)` (v1: no ERC-4626 parking).
+            Early-exit penalty is always `START_PENALTY_BPS`; callers cannot choose it.
     @param asset Allowlisted ERC-20 used for this goal.
     @param target Principal required for a free `complete()`.
     @param end_time Unix timestamp when the penalty reaches zero.
-    @param start_penalty_bps Penalty in bps at `start_time` (max 5000).
     @param vault Optional IERC4626; empty disables yield.
     @return goal The deployed goal contract.
     @return token_id The minted ERC-721 token id.
@@ -246,9 +245,6 @@ def create_goal(
     config: AssetConfig = self.asset_config[asset]
     assert config.allowed  # dev: payday_factory: asset not allowed
     assert target >= config.min_target  # dev: payday_factory: target too low
-    assert (
-        start_penalty_bps <= MAX_START_PENALTY_BPS
-    )  # dev: payday_factory: penalty too high
     assert (
         end_time > block.timestamp
     )  # dev: payday_factory: end time not future
@@ -270,7 +266,7 @@ def create_goal(
         target,
         start_time,
         end_time,
-        start_penalty_bps,
+        START_PENALTY_BPS,
         token_id,
         config.min_deposit,
         salt=convert(token_id, bytes32),
@@ -293,7 +289,7 @@ def create_goal(
         target=target,
         start_time=start_time,
         end_time=end_time,
-        start_penalty_bps=start_penalty_bps,
+        start_penalty_bps=START_PENALTY_BPS,
     )
     return goal, token_id
 

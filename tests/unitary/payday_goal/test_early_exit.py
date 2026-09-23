@@ -5,10 +5,10 @@ import boa
 from tests.utils import create_goal, filter_logs, fund_and_approve, now
 from tests.utils.constants import (
     BPS_DENOMINATOR,
-    DEFAULT_START_PENALTY_BPS,
     DEFAULT_TARGET,
     MIN_DEPOSIT,
     MIN_DURATION,
+    START_PENALTY_BPS,
     URI_COMPLETED,
 )
 
@@ -26,7 +26,7 @@ def test_early_exit_mid_curve_fee_math(factory, asset, saver, treasury):
     expected_bps = goal.penalty_bps()
     remaining = goal.END_TIME() - now()
     duration = goal.END_TIME() - goal.START_TIME()
-    assert expected_bps == DEFAULT_START_PENALTY_BPS * remaining // duration
+    assert expected_bps == START_PENALTY_BPS * remaining // duration
 
     expected_fee = principal * expected_bps // BPS_DENOMINATOR
     expected_net = principal - expected_fee
@@ -106,7 +106,7 @@ def test_non_owner_cannot_early_exit(factory, asset, saver, other):
 
 def test_penalty_at_start_is_full(factory, asset, saver):
     goal, _ = create_goal(factory, asset, saver)
-    assert goal.penalty_bps() == DEFAULT_START_PENALTY_BPS
+    assert goal.penalty_bps() == START_PENALTY_BPS
 
 
 def test_early_exit_dust_rounds_fee_down(factory, asset, saver, treasury):
@@ -117,7 +117,7 @@ def test_early_exit_dust_rounds_fee_down(factory, asset, saver, treasury):
 
     fee, net = goal.preview_early_exit()
     assert fee + net == MIN_DEPOSIT
-    assert fee == MIN_DEPOSIT * DEFAULT_START_PENALTY_BPS // BPS_DENOMINATOR
+    assert fee == MIN_DEPOSIT * START_PENALTY_BPS // BPS_DENOMINATOR
 
     treasury_before = asset.balanceOf(treasury)
     goal.early_exit(sender=saver)

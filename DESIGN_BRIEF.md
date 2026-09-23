@@ -24,7 +24,7 @@ Factory is an **ERC-721** (snekmate) that **mints an access NFT** and deploys a 
 5. **Deposit** anytime (flexible size ≥ min).
 6. **Complete** (free) iff `principal >= target`.
 7. **Early exit** (all-or-nothing) if under target: fee → treasury, rest → NFT owner; goal closed.
-8. Penalty: linear from `start_penalty_bps` at `start_time` → **0 at** `end_time`.
+8. Penalty: linear from the factory's `START_PENALTY_BPS` (8000) at `start_time` → **0 at** `end_time`. Callers cannot choose the rate.
 9. **tokenURI** switches among **static IPFS** metadata packs by goal lifecycle (not onchain dynamic SVG).
 10. Yield adapter optional; v1 may ship with vault = `empty(address)`.
 
@@ -69,8 +69,8 @@ Factory is an **ERC-721** (snekmate) that **mints an access NFT** and deploys a 
 
 ```
 # now in [start_time, end_time):
-penalty_bps = start_penalty_bps * (end_time - now) // (end_time - start_time)
-# now <= start_time: start_penalty_bps
+penalty_bps = START_PENALTY_BPS * (end_time - now) // (end_time - start_time)
+# now <= start_time: START_PENALTY_BPS (8000, set by the factory)
 # now >= end_time: 0
 ```
 
@@ -114,13 +114,12 @@ Implementation notes:
 ## Defaults / caps (factory)
 
 
-| Param                          | Default                  |
-| ------------------------------ | ------------------------ |
-| `start_penalty_bps` suggestion | 8000 (80%)               |
-| `max_start_penalty_bps`        | 10000                    |
-| Min duration                   | 30 days                  |
-| Max duration                   | 730 days                 |
-| Min target / min deposit       | per-asset dust in config |
+| Param                          | Default                                      |
+| ------------------------------ | -------------------------------------------- |
+| `START_PENALTY_BPS`            | 8000 (80%), factory-fixed on every new goal  |
+| Min duration                   | 30 days                                      |
+| Max duration                   | 730 days                                     |
+| Min target / min deposit       | per-asset dust in config                     |
 
 
 Treasury: set at factory deploy. Allowlist: v1 owner-managed `set_asset_allowed` OK.
@@ -170,14 +169,14 @@ No custom ERC20/4626 interface files.
 ### `payday_factory.vy` (ERC-721 + factory)
 
 - Inherits / uses **snekmate ERC721** (name/symbol e.g. `Payday Goal` / `PAYDAY`).  
-- Asset allowlist; duration + penalty caps; `treasury`; `goal_blueprint`.  
+- Asset allowlist; duration caps; factory-fixed penalty; `treasury`; `goal_blueprint`.  
 - URI slots: `uri_created`, `uri_in_progress`, `uri_completed` (set at deploy or by owner).  
 - Mappings: `token_id → goal`, `goal → token_id` (and/or encode token_id sequentially).
 
-`create_goal(asset, target, end_time, start_penalty_bps) -> (goal: address, token_id: uint256)`
+`create_goal(asset, target, end_time, vault=empty(address)) -> (goal: address, token_id: uint256)`
 
-1. Validate asset allowlisted; duration/penalty caps.
-2. `goal = create_from_blueprint(goal_blueprint, factory=self, asset=…, treasury=…, target=…, start_time=block.timestamp, end_time=…, start_penalty_bps=…, token_id=next_id)` (exact arg list as implemented).
+1. Validate asset allowlisted; duration caps.
+2. `goal = create_from_blueprint(..., start_penalty_bps=START_PENALTY_BPS, ...)` — the factory always passes 8000. Callers do not supply a penalty.
 3. Mint ERC-721 `token_id` to `msg.sender`.
 4. Set `tokenURI` to **Created** pack.
 5. Emit `GoalCreated(goal, token_id, creator, asset, target, …)`.
@@ -233,7 +232,7 @@ Events: `Deposit`, `Completed`, `EarlyExit` (fee, net, penalty_bps).
 | T8  | early exit at/after `end_time` — fee 0                                     |
 | T9  | early exit reverts when `principal >= target`                              |
 | T10 | non-allowlisted asset cannot create                                        |
-| T11 | duration / penalty caps enforced                                           |
+| T11 | duration caps enforced; factory sets the 80% penalty                       |
 | T12 | closed goal rejects further deposit/exit                                   |
 | T13 | `tokenURI` is Created at mint; not snekmate default after state set        |
 | T14 | owner `disable_transfers` → transfer reverts; deposit still works          |

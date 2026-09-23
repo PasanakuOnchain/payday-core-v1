@@ -4,7 +4,6 @@ import boa
 
 from tests.utils import create_goal, filter_logs, now
 from tests.utils.constants import (
-    DEFAULT_START_PENALTY_BPS,
     DEFAULT_TARGET,
     MIN_DEPOSIT,
     MIN_DURATION,
@@ -107,7 +106,6 @@ def test_set_asset_allowed_revoke_then_create_goal_reverts(
             asset.address,
             DEFAULT_TARGET,
             end_time,
-            DEFAULT_START_PENALTY_BPS,
             sender=saver,
         )
 
