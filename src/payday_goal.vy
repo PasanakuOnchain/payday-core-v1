@@ -16,7 +16,6 @@
 from ethereum.ercs import IERC20
 from ethereum.ercs import IERC721
 from ethereum.ercs import IERC4626
-from interfaces import IPaydayFactory
 
 
 # @dev Basis points denominator for `fee = principal * bps / BPS_DENOMINATOR`.
@@ -150,8 +149,8 @@ def __init__(
 def deposit(amount: uint256):
     """
     @dev Pulls `amount` of `ASSET` from the NFT owner into this goal.
-    @notice First successful deposit asks the factory to set InProgress URI.
-            If a vault is configured, assets are deposited there after pull.
+    @notice If a vault is configured, assets are deposited there after pull.
+            The factory `tokenURI` switches to InProgress once `principal > 0`.
     @param amount Token amount; must be at least `MIN_DEPOSIT`.
     """
     self._check_open()
@@ -159,15 +158,11 @@ def deposit(amount: uint256):
     assert amount >= MIN_DEPOSIT  # dev: payday_goal: amount below min
     self._assert_vault_healthy()
 
-    first_deposit: bool = self.principal == empty(uint256)
     success: bool = extcall IERC20(ASSET).transferFrom(msg.sender, self, amount)
     assert success  # dev: payday_goal: transferFrom failed
 
     self.principal += amount
     self._park(amount)
-
-    if first_deposit:
-        extcall IPaydayFactory(FACTORY).set_goal_uri_in_progress(TOKEN_ID)
 
     log Deposit(owner=msg.sender, amount=amount, principal=self.principal)
 
@@ -215,7 +210,6 @@ def complete():
     if surplus != empty(uint256):
         self._payout(TREASURY, surplus)
 
-    extcall IPaydayFactory(FACTORY).set_goal_uri_completed(TOKEN_ID)
     log Completed(owner=owner, amount=amount)
 
 
@@ -246,7 +240,6 @@ def early_exit():
     if surplus != empty(uint256):
         self._payout(TREASURY, surplus)
 
-    extcall IPaydayFactory(FACTORY).set_goal_uri_completed(TOKEN_ID)
     log EarlyExit(owner=owner, fee=fee, net=net, penalty_bps=penalty)
 
 

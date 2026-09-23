@@ -4,7 +4,7 @@ Vyper contracts for onchain commitment savings. A factory ERC-721 mints an acces
 
 Free unlock when `principal >= target`. Under target, early exit is all-or-nothing: a linear time-decaying fee goes to treasury, the rest to the NFT owner. Optional ERC-4626 idle yield also goes to treasury.
 
-**Stack:** Vyper 0.4.3, [Moccasin](https://cyfrin.github.io/moccasin/), [snekmate](https://github.com/pcaversaccio/snekmate) (`ownable` + `erc721`).
+**Stack:** Vyper 0.4.3, [Moccasin](https://cyfrin.github.io/moccasin/), [snekmate](https://github.com/pcaversaccio/snekmate) (`ownable_2step` + `erc721`).
 
 ## Layout
 
@@ -12,7 +12,7 @@ Free unlock when `principal >= target`. Under target, early exit is all-or-nothi
 src/
   payday_factory.vy              # ERC-721 access pass + factory + URI packs
   payday_goal.vy                 # EIP-5202 blueprint implementation
-  interfaces/IPaydayFactory.vyi  # Factory surface used by goals
+  interfaces/IPaydayFactory.vyi  # Factory external surface
 script/deploy.py                 # Blueprint then factory
 tests/                           # Unitary, integration, fuzz
 deployments/                     # Chain address placeholders
@@ -67,15 +67,15 @@ penalty_bps = START_PENALTY_BPS * (end_time - now) // (end_time - start_time)
 
 ### NFT metadata
 
-Not a dynamic NFT. The factory stores three pack URIs (max 432 chars) and writes the full string as `tokenURI` (snekmate base URI is empty):
+Not a dynamic NFT. The factory freezes three pack URIs at construction (`URI_CREATED`, `URI_IN_PROGRESS`, `URI_COMPLETED`, max 432 characters). `tokenURI` reads the linked goal and returns one pack:
 
 | State | When | Placeholder pin |
 |-------|------|-----------------|
-| Created | mint, `principal == 0` | `ipfs://payday/v1/created.json` |
-| InProgress | first successful `deposit` | `ipfs://payday/v1/in-progress.json` |
-| Completed | `complete()` or `early_exit()` | `ipfs://payday/v1/completed.json` |
+| Created | `principal == 0` and not closed | `ipfs://payday/v1/created.json` |
+| InProgress | `principal > 0` and not closed | `ipfs://payday/v1/in-progress.json` |
+| Completed | `closed` after `complete()` or `early_exit()` | `ipfs://payday/v1/completed.json` |
 
-Pin real CIDs, then pass them into the factory constructor or call `set_uris` (owner). Linked goals call `set_goal_uri_in_progress` / `set_goal_uri_completed`; those setters reject any other caller.
+Pin real CIDs and pass them into the factory constructor. There is no URI setter. Admin ownership is snekmate `ownable_2step`: `transfer_ownership` sets `pending_owner`, and that account must call `accept_ownership`.
 
 ## Setup
 

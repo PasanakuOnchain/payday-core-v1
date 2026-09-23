@@ -34,7 +34,7 @@ def moccasin_main() -> VyperContract:
     print("goal blueprint:", blueprint.address)
     print("factory:", factory.address)
     print("treasury:", factory.treasury())
-    print("uri_created:", factory.uri_created())
-    print("uri_in_progress:", factory.uri_in_progress())
-    print("uri_completed:", factory.uri_completed())
+    print("URI_CREATED:", factory.URI_CREATED())
+    print("URI_IN_PROGRESS:", factory.URI_IN_PROGRESS())
+    print("URI_COMPLETED:", factory.URI_COMPLETED())
     return factory

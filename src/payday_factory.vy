@@ -6,10 +6,11 @@
 @license GNU Affero General Public License v3.0 only
 @author Payday
 @notice ERC-721 access pass factory for Payday savings goals.
-@dev Deploys each `payday_goal` via `create_from_blueprint`, mints an NFT to
-     the creator, and switches `tokenURI` among static IPFS metadata packs.
-     Uses snekmate `ownable` + `erc721`. NFT transfer moves goal control.
-     Per-token `disable_transfers` is irreversible (soulbind).
+@dev Deploys each `payday_goal` via `create_from_blueprint` and mints an
+     NFT to the creator. `tokenURI` returns one of three immutable IPFS
+     packs from the goal's `principal` and `closed` flag.
+     Uses snekmate `ownable_2step` + `erc721`. NFT transfer moves goal
+     control. Per-token `disable_transfers` is irreversible (soulbind).
 """
 
 
@@ -18,7 +19,13 @@ from ethereum.ercs import IERC721
 from snekmate.tokens.interfaces import IERC721Metadata
 from snekmate.tokens.interfaces import IERC721Enumerable
 from snekmate.auth import ownable as ow
+from snekmate.auth import ownable_2step as o2
 from snekmate.tokens import erc721
+
+
+interface IGoalLifecycle:
+    def principal() -> uint256: view
+    def closed() -> bool: view
 
 
 implements: IERC165
@@ -28,13 +35,14 @@ implements: IERC721Enumerable
 
 
 initializes: ow
+initializes: o2[ownable := ow]
 initializes: erc721[ownable := ow]
 
 
-# Transfer / mint / burn / minter / permit stay factory-controlled.
+# Mint / burn / minter / permit stay factory-controlled.
+# Ownership is snekmate `ownable_2step`, not ERC-721's one-step transfer.
 # Wrapped `transferFrom` and `safeTransferFrom` enforce soulbind.
 exports: (
-    erc721.owner,
     erc721.name,
     erc721.symbol,
     erc721.balanceOf,
@@ -43,14 +51,14 @@ exports: (
     erc721.getApproved,
     erc721.setApprovalForAll,
     erc721.isApprovedForAll,
-    erc721.tokenURI,
     erc721.totalSupply,
     erc721.tokenByIndex,
     erc721.tokenOfOwnerByIndex,
     erc721.supportsInterface,
-    erc721.transfer_ownership,
-    erc721.renounce_ownership,
 )
+
+
+exports: o2.__interface__
 
 
 # @dev Basis points denominator for `fee = principal * bps / BPS_DENOMINATOR`.
@@ -93,6 +101,19 @@ EIP712_VERSION: constant(String[20]) = "1"
 GOAL_BLUEPRINT: public(immutable(address))
 
 
+# @dev Pack returned by `tokenURI` while `principal == 0` and not closed.
+# @notice Maximum length is 432 characters.
+URI_CREATED: public(immutable(String[432]))
+
+
+# @dev Pack returned by `tokenURI` while `principal > 0` and not closed.
+URI_IN_PROGRESS: public(immutable(String[432]))
+
+
+# @dev Pack returned by `tokenURI` once the linked goal is closed.
+URI_COMPLETED: public(immutable(String[432]))
+
+
 struct AssetConfig:
     allowed: bool
     min_target: uint256
@@ -102,20 +123,6 @@ struct AssetConfig:
 # @dev Recipient of early-exit fees and skimmed yield for newly created goals.
 # @notice Existing clones keep the treasury snapshotted at `create_goal`.
 treasury: public(address)
-
-
-# @dev Full IPFS metadata pack URI written at mint (`principal == 0`).
-# @notice Snekmate base URI is empty, so `tokenURI` returns this string only.
-#         Maximum length is 432 characters (snekmate `_token_uris` bound).
-uri_created: public(String[432])
-
-
-# @dev Full IPFS metadata pack URI written on the first successful deposit.
-uri_in_progress: public(String[432])
-
-
-# @dev Full IPFS metadata pack URI written on `complete` or `early_exit`.
-uri_completed: public(String[432])
 
 
 # @dev Owner-managed ERC-20 allowlist plus per-asset min target / min deposit.
@@ -165,19 +172,6 @@ event TreasuryUpdated:
     treasury: indexed(address)
 
 
-# @dev Emitted when the three static IPFS metadata pack URIs are replaced.
-event UrisUpdated:
-    uri_created: String[432]
-    uri_in_progress: String[432]
-    uri_completed: String[432]
-
-
-# @dev Emitted when a linked goal updates `tokenURI` to a lifecycle pack.
-event GoalUriUpdated:
-    token_id: indexed(uint256)
-    uri: String[432]
-
-
 @deploy
 @payable
 def __init__(
@@ -188,37 +182,29 @@ def __init__(
     uri_completed: String[432],
 ):
     """
-    @dev Assigns the owner to `msg.sender` and initialises snekmate ERC-721
-         with an empty base URI so each token stores a full IPFS pack URI.
+    @dev Assigns the owner to `msg.sender` and initialises snekmate ERC-721.
+         The three metadata packs are immutable for the life of the factory.
     @param goal_blueprint EIP-5202 blueprint address for `payday_goal`.
     @param treasury Address that receives early-exit fees and skimmed yield.
     @param uri_created Static metadata URI for newly created goals.
     @param uri_in_progress Static metadata URI after the first deposit.
     @param uri_completed Static metadata URI after complete or early exit.
     """
-    assert goal_blueprint != empty(
-        address
-    )  # dev: payday_factory: zero blueprint
+    assert goal_blueprint != empty(address)  # dev: payday_factory: zero blueprint
     assert treasury != empty(address)  # dev: payday_factory: zero treasury
-    assert len(uri_created) != empty(
-        uint256
-    )  # dev: payday_factory: empty created uri
-    assert len(uri_in_progress) != empty(
-        uint256
-    )  # dev: payday_factory: empty progress uri
-    assert len(uri_completed) != empty(
-        uint256
-    )  # dev: payday_factory: empty completed uri
+    assert len(uri_created) != empty(uint256)  # dev: payday_factory: empty created uri
+    assert len(uri_in_progress) != empty(uint256)  # dev: payday_factory: empty progress uri
+    assert len(uri_completed) != empty(uint256)  # dev: payday_factory: empty completed uri
 
     ow.__init__()
-    # Empty base URI: `tokenURI` returns the per-token pack string only.
+    o2.__init__()
     erc721.__init__(NAME, SYMBOL, "", EIP712_NAME, EIP712_VERSION)
 
     GOAL_BLUEPRINT = goal_blueprint
+    URI_CREATED = uri_created
+    URI_IN_PROGRESS = uri_in_progress
+    URI_COMPLETED = uri_completed
     self.treasury = treasury
-    self.uri_created = uri_created
-    self.uri_in_progress = uri_in_progress
-    self.uri_completed = uri_completed
 
 
 @external
@@ -279,7 +265,6 @@ def create_goal(
     self.token_of[goal] = token_id
 
     erc721._safe_mint(msg.sender, token_id, b"")
-    erc721._set_token_uri(token_id, self.uri_created)
 
     log GoalCreated(
         goal=goal,
@@ -352,28 +337,6 @@ def safeTransferFrom(
 
 
 @external
-def set_goal_uri_in_progress(token_id: uint256):
-    """
-    @dev Sets the InProgress metadata pack. Callable only by the linked goal.
-    @param token_id Token whose URI is updated.
-    """
-    self._check_goal_caller(token_id)
-    erc721._set_token_uri(token_id, self.uri_in_progress)
-    log GoalUriUpdated(token_id=token_id, uri=self.uri_in_progress)
-
-
-@external
-def set_goal_uri_completed(token_id: uint256):
-    """
-    @dev Sets the Completed metadata pack. Callable only by the linked goal.
-    @param token_id Token whose URI is updated.
-    """
-    self._check_goal_caller(token_id)
-    erc721._set_token_uri(token_id, self.uri_completed)
-    log GoalUriUpdated(token_id=token_id, uri=self.uri_completed)
-
-
-@external
 def set_asset_allowed(
     asset: address,
     allowed: bool,
@@ -423,36 +386,23 @@ def set_treasury(treasury: address):
 
 
 @external
-def set_uris(
-    uri_created: String[432],
-    uri_in_progress: String[432],
-    uri_completed: String[432],
-):
+@view
+def tokenURI(token_id: uint256) -> String[512]:
     """
-    @dev Replaces the three static IPFS metadata packs for future transitions.
-    @param uri_created Created-pack URI.
-    @param uri_in_progress InProgress-pack URI.
-    @param uri_completed Completed-pack URI.
+    @dev Returns the lifecycle metadata pack for `token_id`.
+    @notice Created when principal is zero, InProgress after a deposit,
+            Completed once the goal is closed. Closed wins over a zero
+            principal, because complete and early-exit clear principal.
+    @param token_id The access NFT.
+    @return String The immutable IPFS pack URI for the current state.
     """
-    ow._check_owner()
-    assert len(uri_created) != empty(
-        uint256
-    )  # dev: payday_factory: empty created uri
-    assert len(uri_in_progress) != empty(
-        uint256
-    )  # dev: payday_factory: empty progress uri
-    assert len(uri_completed) != empty(
-        uint256
-    )  # dev: payday_factory: empty completed uri
-
-    self.uri_created = uri_created
-    self.uri_in_progress = uri_in_progress
-    self.uri_completed = uri_completed
-    log UrisUpdated(
-        uri_created=uri_created,
-        uri_in_progress=uri_in_progress,
-        uri_completed=uri_completed,
-    )
+    erc721._require_minted(token_id)
+    goal: address = self.goals[token_id]
+    if staticcall IGoalLifecycle(goal).closed():
+        return URI_COMPLETED
+    if staticcall IGoalLifecycle(goal).principal() != empty(uint256):
+        return URI_IN_PROGRESS
+    return URI_CREATED
 
 
 @external
@@ -493,15 +443,3 @@ def _check_transfers_enabled(token_id: uint256):
     assert not self.transfers_disabled[
         token_id
     ]  # dev: payday_factory: transfers disabled
-
-
-@internal
-@view
-def _check_goal_caller(token_id: uint256):
-    """
-    @dev Reverts unless `msg.sender` is the goal cloned for `token_id`.
-    @param token_id Token whose linked goal must be the caller.
-    """
-    goal: address = self.goals[token_id]
-    assert goal != empty(address)  # dev: payday_factory: unknown token
-    assert msg.sender == goal  # dev: payday_factory: caller is not goal

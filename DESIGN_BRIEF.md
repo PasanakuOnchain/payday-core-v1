@@ -78,7 +78,7 @@ Fee rounds **down** (favor saver). Mul before div.
 
 ### Goal lifecycle ↔ NFT metadata (static IPFS)
 
-Not a dynamic NFT. Factory (or goal, calling factory) **sets** `tokenURI` to one of three **pre-pinned** base URIs / paths when state changes:
+Not a dynamic NFT. `tokenURI` returns one of three **pre-pinned** immutable pack URIs according to the goal's lifecycle:
 
 
 | State        | When                                            | tokenURI meaning                                                                                                                             |
@@ -90,9 +90,9 @@ Not a dynamic NFT. Factory (or goal, calling factory) **sets** `tokenURI` to one
 
 Implementation notes:
 
-- Use **snekmate ERC721** as the base; override / set URI away from the snekmate default once state transitions fire.
-- Store three immutable (or owner-set) URI strings on the factory, e.g. `uri_created`, `uri_in_progress`, `uri_completed` (full `ipfs://…/metadata.json` or base + id convention — pick one and document).
-- On transition, `tokenURI[token_id]` updates to that pack. **No** per-tx SVG generation.
+- Use **snekmate ERC721** as the base. The factory defines `tokenURI` and does not store a per-token URI.
+- Store three immutable URI strings on the factory, `URI_CREATED`, `URI_IN_PROGRESS`, and `URI_COMPLETED` (full `ipfs://…/metadata.json`), set only in the constructor.
+- `tokenURI` reads the linked goal: closed → Completed; else `principal > 0` → InProgress; else Created. **No** per-tx SVG generation.
 - Transfer of the NFT transfers control of the goal (deposit / complete / early_exit). Document that clearly.
 
 
@@ -170,7 +170,8 @@ No custom ERC20/4626 interface files.
 
 - Inherits / uses **snekmate ERC721** (name/symbol e.g. `Payday Goal` / `PAYDAY`).  
 - Asset allowlist; duration caps; factory-fixed penalty; `treasury`; `goal_blueprint`.  
-- URI slots: `uri_created`, `uri_in_progress`, `uri_completed` (set at deploy or by owner).  
+- URI slots: `URI_CREATED`, `URI_IN_PROGRESS`, `URI_COMPLETED` (immutable, constructor only).
+- Admin ownership is snekmate `ownable_2step` (`transfer_ownership` then `accept_ownership`).  
 - Mappings: `token_id → goal`, `goal → token_id` (and/or encode token_id sequentially).
 
 `create_goal(asset, target, end_time, vault=empty(address)) -> (goal: address, token_id: uint256)`
@@ -178,12 +179,12 @@ No custom ERC20/4626 interface files.
 1. Validate asset allowlisted; duration caps.
 2. `goal = create_from_blueprint(..., start_penalty_bps=START_PENALTY_BPS, ...)` — the factory always passes 8000. Callers do not supply a penalty.
 3. Mint ERC-721 `token_id` to `msg.sender`.
-4. Set `tokenURI` to **Created** pack.
+4. `tokenURI` returns the **Created** pack while `principal == 0` and the goal is open.
 5. Emit `GoalCreated(goal, token_id, creator, asset, target, …)`.
 
 **Access helper (for goals):** `owner_of_goal(goal) -> address` via `owner_of(token_id)`.
 
-**URI updates:** `set_goal_uri_in_progress(token_id)` / `set_goal_uri_completed(token_id)` — callable **only by the linked goal** (or factory internal after auth). Goals call factory on first deposit and on close.
+**URI:** no setters. `tokenURI` follows `closed` and `principal` on the linked goal.
 
 ### `payday_goal.vy` (blueprint)
 

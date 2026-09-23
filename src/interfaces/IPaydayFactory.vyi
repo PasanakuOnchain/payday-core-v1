@@ -35,18 +35,12 @@ event TreasuryUpdated:
     treasury: address
 
 
-event UrisUpdated:
-    uri_created: String[432]
-    uri_in_progress: String[432]
-    uri_completed: String[432]
-
-
-event GoalUriUpdated:
-    token_id: uint256
-    uri: String[432]
-
-
 event OwnershipTransferred:
+    previous_owner: address
+    new_owner: address
+
+
+event OwnershipTransferStarted:
     previous_owner: address
     new_owner: address
 
@@ -169,6 +163,11 @@ def transfer_ownership(new_owner: address):
 
 
 @external
+def accept_ownership():
+    ...
+
+
+@external
 def renounce_ownership():
     ...
 
@@ -196,27 +195,12 @@ def safeTransferFrom(owner: address, to: address, token_id: uint256, data: Bytes
 
 
 @external
-def set_goal_uri_in_progress(token_id: uint256):
-    ...
-
-
-@external
-def set_goal_uri_completed(token_id: uint256):
-    ...
-
-
-@external
 def set_asset_allowed(asset: address, allowed: bool, min_target: uint256, min_deposit: uint256):
     ...
 
 
 @external
 def set_treasury(treasury: address):
-    ...
-
-
-@external
-def set_uris(uri_created: String[432], uri_in_progress: String[432], uri_completed: String[432]):
     ...
 
 
@@ -276,19 +260,25 @@ def treasury() -> address:
 
 @view
 @external
-def uri_created() -> String[432]:
+def URI_CREATED() -> String[432]:
     ...
 
 
 @view
 @external
-def uri_in_progress() -> String[432]:
+def URI_IN_PROGRESS() -> String[432]:
     ...
 
 
 @view
 @external
-def uri_completed() -> String[432]:
+def URI_COMPLETED() -> String[432]:
+    ...
+
+
+@view
+@external
+def pending_owner() -> address:
     ...
 
 

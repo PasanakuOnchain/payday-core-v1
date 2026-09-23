@@ -27,15 +27,6 @@ def test_uri_created_in_progress_completed(factory, asset, saver):
     assert factory.tokenURI(token_id) == URI_COMPLETED
 
 
-def test_non_goal_cannot_set_uri(factory, asset, saver, other):
-    _, token_id = create_goal(factory, asset, saver)
-    with boa.env.prank(other):
-        with boa.reverts(dev="payday_factory: caller is not goal"):
-            factory.set_goal_uri_in_progress(token_id)
-        with boa.reverts(dev="payday_factory: caller is not goal"):
-            factory.set_goal_uri_completed(token_id)
-
-
 def test_owner_disable_transfers_blocks_transfer_deposit_still_works(
     factory, asset, saver, other
 ):
