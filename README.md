@@ -134,3 +134,45 @@ goal, token_id = factory.create_goal(
 ## License
 
 `payday_factory.vy` composes snekmate and is **AGPL-3.0-only**. `payday_goal.vy` is also **AGPL-3.0-only** (see the file header).
+
+## Monad deployment and verification
+
+`moccasin.toml` includes `monad` (143) and `monad-testnet` (10143), using
+[Monad's network settings](https://docs.monad.xyz/developer-essentials/network-information).
+Use a Moccasin keystore account for deployment:
+
+```bash
+uv run mox run deploy --network monad-testnet --account your-account
+```
+
+Record the blueprint, factory, treasury and asset addresses in
+`deployments/monad-testnet.json` (or `monad.json`), then run the web ABI sync.
+No Monad deployment is recorded yet. Deploy does not automatically verify.
+
+Verification is a separate, read-only script. Fill the hardcoded
+`FACTORY_ADDRESS`, `GOAL_BLUEPRINT_ADDRESS`, `ORIGINAL_TREASURY_ADDRESS` and
+original metadata URIs in `script/verify.py`. Do not substitute the current
+factory treasury if it has changed since deployment. Optionally fill
+`GOAL_ADDRESS` to verify a factory-created goal clone too. Addresses are never
+read from environment variables or CLI arguments.
+
+Set `ETHERSCAN_API_KEY` in your ignored `.env` for the Monadscan Etherscan V2
+explorer, then run:
+
+```bash
+uv run mox run verify --network monad-testnet
+# Mainnet:
+uv run mox run verify --network monad
+```
+
+The script uses the Titanoboa backend described in
+[Moccasin's verification guide](https://cyfrin.github.io/moccasin/how-tos/verify_contracts.html),
+with an explicit Etherscan chain ID (the installed Moccasin wrapper otherwise
+defaults to Ethereum). It waits for factory and optional goal verification and
+fails on missing addresses, a wrong network, or a mismatched blueprint build.
+It never deploys or signs a transaction.
+
+The EIP-5202 blueprint is checked against the exact local compiled bytecode.
+The installed verification backend does not support publishing blueprint
+verification; this local match is **not** explorer source verification.
+Use the same Vyper version, dependencies and compiler settings as deployment.

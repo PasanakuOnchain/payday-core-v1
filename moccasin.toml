@@ -24,3 +24,23 @@ is_zksync = true
 prompt_live = true
 
 # You can view all configuration options at https://cyfrin.github.io/moccasin/all_moccasin_toml_parameters.html
+
+[networks.monad]
+url = "https://rpc.monad.xyz"
+chain_id = 143
+is_zksync = false
+prompt_live = true
+save_to_db = true
+explorer_uri = "https://api.etherscan.io/v2/api"
+explorer_type = "etherscan"
+explorer_api_key = "$ETHERSCAN_API_KEY"
+
+[networks.monad-testnet]
+url = "https://testnet-rpc.monad.xyz"
+chain_id = 10143
+is_zksync = false
+prompt_live = true
+save_to_db = true
+explorer_uri = "https://api.etherscan.io/v2/api"
+explorer_type = "etherscan"
+explorer_api_key = "$ETHERSCAN_API_KEY"
