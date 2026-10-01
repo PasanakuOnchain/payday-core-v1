@@ -231,9 +231,7 @@ def create_goal(
     config: AssetConfig = self.asset_config[asset]
     assert config.allowed  # dev: payday_factory: asset not allowed
     assert target >= config.min_target  # dev: payday_factory: target too low
-    assert (
-        end_time > block.timestamp
-    )  # dev: payday_factory: end time not future
+    assert end_time > block.timestamp  # dev: payday_factory: end time not future
 
     duration: uint256 = end_time - block.timestamp
     assert duration >= MIN_DURATION  # dev: payday_factory: duration too short
