@@ -12,9 +12,9 @@ MIN_DEPOSIT = 1 * ONE
 MIN_TARGET = 10 * ONE
 DEFAULT_TARGET = 100 * ONE
 
-URI_CREATED = "ipfs://payday/v1/created.json"
-URI_IN_PROGRESS = "ipfs://payday/v1/in-progress.json"
-URI_COMPLETED = "ipfs://payday/v1/completed.json"
+URI_CREATED = "ipfs://bafybeif5rxra2mgl5tbke4nyqlnf5g6qcxgrmnxpcvk7jf5cv5ky3pojsq/default.png"
+URI_IN_PROGRESS = "ipfs://bafybeif5rxra2mgl5tbke4nyqlnf5g6qcxgrmnxpcvk7jf5cv5ky3pojsq/default.png"
+URI_COMPLETED = "ipfs://bafybeif5rxra2mgl5tbke4nyqlnf5g6qcxgrmnxpcvk7jf5cv5ky3pojsq/default.png"
 
 NAME = "Payday Goal"
 SYMBOL = "PAYD"
