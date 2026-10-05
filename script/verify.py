@@ -14,14 +14,13 @@ from moccasin.config import get_active_network
 from src import payday_factory, payday_goal
 
 # Replace these after deployment. No address is read from env or CLI arguments.
+# FACTORY_ADDRESS is also read by script/verify_goals.py.
 FACTORY_ADDRESS = "0x0000000000000000000000000000000000000000"
 GOAL_BLUEPRINT_ADDRESS = "0x0000000000000000000000000000000000000000"
-# Optional: set a goal clone address once a participant has created one.
-GOAL_ADDRESS = "0x0000000000000000000000000000000000000000"
 ORIGINAL_TREASURY_ADDRESS = "0x0000000000000000000000000000000000000000"
-URI_CREATED = "ipfs://payday/v1/created.json"
-URI_IN_PROGRESS = "ipfs://payday/v1/in-progress.json"
-URI_COMPLETED = "ipfs://payday/v1/completed.json"
+URI_CREATED = "ipfs://bafybeif5rxra2mgl5tbke4nyqlnf5g6qcxgrmnxpcvk7jf5cv5ky3pojsq/default.png"
+URI_IN_PROGRESS = "ipfs://bafybeif5rxra2mgl5tbke4nyqlnf5g6qcxgrmnxpcvk7jf5cv5ky3pojsq/default.png"
+URI_COMPLETED = "ipfs://bafybeif5rxra2mgl5tbke4nyqlnf5g6qcxgrmnxpcvk7jf5cv5ky3pojsq/default.png"
 
 
 def deployment_addresses():
@@ -78,30 +77,6 @@ def moccasin_main():
     result = boa.verify(factory, verifier)
     result.wait_for_verification()
     print(f"Factory verified: {factory_address}")
-    if int(Address(GOAL_ADDRESS), 16) != 0:
-        goal = payday_goal.at(Address(GOAL_ADDRESS))
-        if (
-            goal.FACTORY() != factory_address
-            or factory.goals(goal.TOKEN_ID()) != goal.address
-        ):
-            raise ValueError("GOAL_ADDRESS is not registered with this factory.")
-        goal.ctor_calldata = abi_encode(
-            "(address,address,address,address,uint256,uint256,uint256,uint256,uint256,uint256)",
-            (
-                goal.FACTORY(),
-                goal.ASSET(),
-                goal.TREASURY(),
-                goal.VAULT(),
-                goal.TARGET(),
-                goal.START_TIME(),
-                goal.END_TIME(),
-                goal.START_PENALTY_BPS(),
-                goal.TOKEN_ID(),
-                goal.MIN_DEPOSIT(),
-            ),
-        )
-        boa.verify(goal, verifier).wait_for_verification()
-        print(f"Goal verified: {goal.address}")
     print(f"Blueprint bytecode matched locally: {blueprint_address}")
     print("EIP-5202 blueprint explorer verification is not supported by this verifier.")
     return factory

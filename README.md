@@ -152,9 +152,9 @@ No Monad deployment is recorded yet. Deploy does not automatically verify.
 Verification is a separate, read-only script. Fill the hardcoded
 `FACTORY_ADDRESS`, `GOAL_BLUEPRINT_ADDRESS`, `ORIGINAL_TREASURY_ADDRESS` and
 original metadata URIs in `script/verify.py`. Do not substitute the current
-factory treasury if it has changed since deployment. Optionally fill
-`GOAL_ADDRESS` to verify a factory-created goal clone too. Addresses are never
-read from environment variables or CLI arguments.
+factory treasury if it has changed since deployment. The script verifies the
+factory and checks the blueprint bytecode. Addresses are never read from
+environment variables or CLI arguments.
 
 Set `ETHERSCAN_API_KEY` in your ignored `.env` for the Monadscan Etherscan V2
 explorer, then run:
@@ -165,12 +165,25 @@ uv run mox run verify --network monad-testnet
 uv run mox run verify --network monad
 ```
 
-The script uses the Titanoboa backend described in
+Goal clones are verified separately. `script/verify_goals.py` reads the same
+`FACTORY_ADDRESS`, walks every minted access NFT, rebuilds each goal's
+constructor arguments from its immutables, and submits the ones the explorer
+does not already have source for. Re-run it after new goals are created:
+
+```bash
+uv run mox run verify_goals --network monad-testnet
+# Mainnet:
+uv run mox run verify_goals --network monad
+```
+
+Both scripts use the Titanoboa backend described in
 [Moccasin's verification guide](https://cyfrin.github.io/moccasin/how-tos/verify_contracts.html),
 with an explicit Etherscan chain ID (the installed Moccasin wrapper otherwise
-defaults to Ethereum). It waits for factory and optional goal verification and
-fails on missing addresses, a wrong network, or a mismatched blueprint build.
-It never deploys or signs a transaction.
+defaults to Ethereum). Factory verification waits for the explorer and fails
+on missing addresses, a wrong network, or a mismatched blueprint build.
+Goal verification skips contracts that are already verified, keeps going if
+one submission fails, and exits with an error if any goal failed.
+Neither script deploys or signs a transaction.
 
 The EIP-5202 blueprint is checked against the exact local compiled bytecode.
 The installed verification backend does not support publishing blueprint
