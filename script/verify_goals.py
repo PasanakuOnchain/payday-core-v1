@@ -7,7 +7,6 @@ Only the explorer API credential comes from moccasin.toml / .env.
 """
 
 import boa
-from boa.explorer import Etherscan
 from boa.util.abi import Address, abi_encode
 from moccasin.config import get_active_network
 
@@ -71,11 +70,12 @@ def moccasin_main():
         raise ValueError("Select the live monad or monad-testnet network.")
     if not network.explorer_api_key or network.explorer_api_key.startswith("$"):
         raise ValueError("Set ETHERSCAN_API_KEY for the configured explorer.")
+    verify.ensure_view_sender()
     if not boa.env.get_code(factory_address):
         raise ValueError("No factory code at the hardcoded address on this network.")
 
     factory = payday_factory.at(factory_address)
-    verifier = Etherscan(
+    verifier = verify.EtherscanV2(
         uri=network.explorer_uri,
         api_key=network.explorer_api_key,
         chain_id=network.chain_id,

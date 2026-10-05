@@ -13,14 +13,40 @@ from moccasin.config import get_active_network
 
 from src import payday_factory, payday_goal
 
+
+class EtherscanV2(Etherscan):
+    """Etherscan v2 reads `chainid` from the URL, not the POST body."""
+
+    def verify(self, *args, wait: bool = False, **kwargs):
+        base = self.uri
+        separator = "&" if base and "?" in base else "?"
+        self.uri = f"{base}{separator}chainid={self.chain_id}"
+        try:
+            result = super().verify(*args, wait=False, **kwargs)
+        finally:
+            self.uri = base
+        if wait and result is not None:
+            result.wait_for_verification()
+            return None
+        return result
+
+
 # Replace these after deployment. No address is read from env or CLI arguments.
 # FACTORY_ADDRESS is also read by script/verify_goals.py.
-FACTORY_ADDRESS = "0x0000000000000000000000000000000000000000"
-GOAL_BLUEPRINT_ADDRESS = "0x0000000000000000000000000000000000000000"
-ORIGINAL_TREASURY_ADDRESS = "0x0000000000000000000000000000000000000000"
+FACTORY_ADDRESS = "0xaDD60a39AabFD6f8eBA056153ac2d291d6624f60"
+GOAL_BLUEPRINT_ADDRESS = "0x4E09E94c82e3ba35ECfE8Fa231FcfF7D9DF94984"
+ORIGINAL_TREASURY_ADDRESS = "0xC14fF56E720f79d08413CE00533256433D2ED929"
 URI_CREATED = "ipfs://bafybeif5rxra2mgl5tbke4nyqlnf5g6qcxgrmnxpcvk7jf5cv5ky3pojsq/default.png"
 URI_IN_PROGRESS = "ipfs://bafybeif5rxra2mgl5tbke4nyqlnf5g6qcxgrmnxpcvk7jf5cv5ky3pojsq/default.png"
 URI_COMPLETED = "ipfs://bafybeif5rxra2mgl5tbke4nyqlnf5g6qcxgrmnxpcvk7jf5cv5ky3pojsq/default.png"
+
+# Live eth_call still needs a from-address. This sender never signs.
+_VIEW_SENDER = Address("0xc14ff56e720f79d08413ce00533256433d2ed929")
+
+
+def ensure_view_sender():
+    if boa.env.eoa is None:
+        boa.env.eoa = _VIEW_SENDER
 
 
 def deployment_addresses():
@@ -46,6 +72,7 @@ def moccasin_main():
         raise ValueError("Select the live monad or monad-testnet network.")
     if not network.explorer_api_key or network.explorer_api_key.startswith("$"):
         raise ValueError("Set ETHERSCAN_API_KEY for the configured explorer.")
+    ensure_view_sender()
     if not boa.env.get_code(factory_address):
         raise ValueError("No factory code at the hardcoded address on this network.")
 
@@ -67,9 +94,9 @@ def moccasin_main():
             URI_COMPLETED,
         ),
     )
-    # Moccasin 0.4.4's wrapper constructs Etherscan without its chain_id, which
-    # defaults to Ethereum mainnet. Use the same Titanoboa backend explicitly.
-    verifier = Etherscan(
+    # Titanoboa posts chainid in the form body. Etherscan v2 requires it on
+    # the query string, or Monadscan reports the chain id as missing.
+    verifier = EtherscanV2(
         uri=network.explorer_uri,
         api_key=network.explorer_api_key,
         chain_id=network.chain_id,
