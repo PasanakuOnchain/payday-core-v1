@@ -120,7 +120,7 @@ struct AssetConfig:
     min_deposit: uint256
 
 
-# @dev Recipient of early-exit fees and skimmed yield for newly created goals.
+# @dev Recipient of early-exit fees for newly created goals.
 # @notice Existing clones keep the treasury snapshotted at `create_goal`.
 treasury: public(address)
 
@@ -185,7 +185,7 @@ def __init__(
     @dev Assigns the owner to `msg.sender` and initialises snekmate ERC-721.
          The three metadata packs are immutable for the life of the factory.
     @param goal_blueprint EIP-5202 blueprint address for `payday_goal`.
-    @param treasury Address that receives early-exit fees and skimmed yield.
+    @param treasury Address that receives early-exit fees.
     @param uri_created Static metadata URI for newly created goals.
     @param uri_in_progress Static metadata URI after the first deposit.
     @param uri_completed Static metadata URI after complete or early exit.
@@ -213,18 +213,15 @@ def create_goal(
     asset: address,
     target: uint256,
     end_time: uint256,
-    vault: address = empty(address),
 ) -> (address, uint256):
     """
     @dev Deploys a goal clone from the blueprint and mints an access NFT.
     @notice The NFT owner alone may deposit, complete, or early-exit.
             Transferring the NFT transfers control of the goal.
-            `vault` defaults to `empty(address)` (v1: no ERC-4626 parking).
             Early-exit penalty is always `START_PENALTY_BPS`; callers cannot choose it.
     @param asset Allowlisted ERC-20 used for this goal.
     @param target Principal required for a free `complete()`.
     @param end_time Unix timestamp when the penalty reaches zero.
-    @param vault Optional IERC4626; empty disables yield.
     @return goal The deployed goal contract.
     @return token_id The minted ERC-721 token id.
     """
@@ -246,7 +243,6 @@ def create_goal(
         self,
         asset,
         self.treasury,
-        vault,
         target,
         start_time,
         end_time,
@@ -367,7 +363,7 @@ def set_asset_allowed(
 def set_treasury(treasury: address):
     """
     @dev Updates the treasury used by subsequently created goals.
-    @param treasury New fee / yield recipient. Must be nonzero.
+    @param treasury New fee recipient. Must be nonzero.
     """
     ow._check_owner()
     assert treasury != empty(address)  # dev: payday_factory: zero treasury

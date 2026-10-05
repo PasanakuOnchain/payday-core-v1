@@ -66,7 +66,7 @@ def mint(to: address, amount: uint256):
 @external
 def burn(from_: address, amount: uint256):
     """
-    @dev Unrestricted burn for simulating vault losses.
+    @dev Unrestricted burn for tests.
     @param from_ Account to burn from.
     @param amount Amount to burn.
     """

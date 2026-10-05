@@ -30,7 +30,6 @@ def _deploy(
         factory_addr,
         asset_addr,
         treasury_addr,
-        EMPTY,
         target,
         start,
         end,

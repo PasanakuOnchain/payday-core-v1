@@ -1,7 +1,7 @@
 [project]
 name = "payday-core-v1"
 version = "0.1.0"
-description = "Onchain commitment-savings vaults"
+description = "Onchain commitment savings"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

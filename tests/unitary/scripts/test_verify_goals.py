@@ -72,9 +72,9 @@ def test_verify_goals_submits_each_unverified_goal(monkeypatch, factory, asset, 
     assert first_args[0] == factory.address
     assert first_args[1] == asset.address
     assert first_args[2] == factory.treasury()
-    assert first_args[8] == first_id
-    assert second_args[8] == second_id
-    assert second_args[6] - second_args[5] == MIN_DURATION + DAY
+    assert first_args[7] == first_id
+    assert second_args[7] == second_id
+    assert second_args[5] - second_args[4] == MIN_DURATION + DAY
 
 
 def test_verify_goals_skips_source_already_on_explorer(

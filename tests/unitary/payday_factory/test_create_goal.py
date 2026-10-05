@@ -44,7 +44,6 @@ def test_create_goal_deploys_blueprint_and_mints_nft(factory, asset, saver):
     assert goal.MIN_DEPOSIT() == MIN_DEPOSIT
     assert goal.principal() == 0
     assert goal.closed() is False
-    assert goal.VAULT() == "0x0000000000000000000000000000000000000000"
 
     assert len(created_logs) == 1
     assert created_logs[0].goal == goal.address

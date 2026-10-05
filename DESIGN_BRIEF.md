@@ -9,7 +9,7 @@
 
 ## One-liner
 
-Factory is an **ERC-721** (snekmate) that **mints an access NFT** and deploys a **goal** via `create_from_blueprint`. NFT owner alone may deposit / complete / early-exit. Free withdraw iff principal ≥ target; else all-or-nothing early exit with linear time-decaying penalty → treasury. Optional ERC-4626 idle yield → treasury.
+Factory is an **ERC-721** (snekmate) that **mints an access NFT** and deploys a **goal** via `create_from_blueprint`. NFT owner alone may deposit / complete / early-exit. Free withdraw iff principal ≥ target; else all-or-nothing early exit with linear time-decaying penalty → treasury.
 
 ---
 
@@ -26,7 +26,6 @@ Factory is an **ERC-721** (snekmate) that **mints an access NFT** and deploys a 
 7. **Early exit** (all-or-nothing) if under target: fee → treasury, rest → NFT owner; goal closed.
 8. Penalty: linear from the factory's `START_PENALTY_BPS` (8000) at `start_time` → **0 at** `end_time`. Callers cannot choose the rate.
 9. **tokenURI** switches among **static IPFS** metadata packs by goal lifecycle (not onchain dynamic SVG).
-10. Yield adapter optional; v1 may ship with vault = `empty(address)`.
 
 
 
@@ -34,9 +33,9 @@ Factory is an **ERC-721** (snekmate) that **mints an access NFT** and deploys a 
 
 - Partial early withdraw  
 - Monthly deposit enforcement onchain  
-- Yield to the saver  
+- Idle yield or an ERC-4626 vault  
 - Cross-chain / bridging  
-- Custom `IERC20` / `IERC4626` `.vy` interface files (use Vyper built-ins)  
+- Custom `IERC20` `.vy` interface files (use the Vyper built-in)  
 - Fully dynamic/onchain-rendered NFT art  
 - Solidity or Foundry in this repo  
 - Frontend (`payday-web`)
@@ -59,8 +58,7 @@ Factory is an **ERC-721** (snekmate) that **mints an access NFT** and deploys a 
 | Early exit  | Only when `principal < target`; closes goal                                           |
 | Penalty     | `fee = principal * penalty_bps(now) / 10_000` → `treasury`                            |
 | Deposits    | No calendar checks                                                                    |
-| Yield       | Optional; surplus → treasury; principal stays nominal                                 |
-| Interfaces  | Vyper **built-in** `IERC20Compatible` / `IERC4626` (see below)                        |
+| Interfaces  | Vyper **built-in** `IERC20` (see below)                                               |
 
 
 
@@ -132,10 +130,9 @@ Treasury: set at factory deploy. Allowlist: v1 owner-managed `set_asset_allowed`
 
 Use Vyper’s built-in interfaces ([docs](https://docs.vyperlang.org/en/stable/interfaces.html#built-in-interfaces)):
 
-- ERC-20: built-in `IERC20Compatible` (or current docs name for ERC20-compatible) for `transfer` / `transferFrom` / `approve` / `balanceOf`
-- ERC-4626: built-in `IERC4626` for phase-3 vault park/skim
+- ERC-20: built-in `IERC20` for `transfer` / `transferFrom` / `approve` / `balanceOf`
 
-**Do not** add `interfaces/IERC20.vy` or `interfaces/IERC4626.vy` to the repo unless a gap in the Vyper version forces it — prefer upgrading Vyper/Moccasin instead.
+**Do not** add `interfaces/IERC20.vy` to the repo unless a gap in the Vyper version forces it — prefer upgrading Vyper/Moccasin instead.
 
 ---
 
@@ -156,7 +153,7 @@ payday-core/
   DESIGN_BRIEF.md
 ```
 
-No custom ERC20/4626 interface files.
+No custom ERC-20 interface files.
 
 ### Blueprint deploy flow
 
@@ -174,7 +171,7 @@ No custom ERC20/4626 interface files.
 - Admin ownership is snekmate `ownable_2step` (`transfer_ownership` then `accept_ownership`).  
 - Mappings: `token_id → goal`, `goal → token_id` (and/or encode token_id sequentially).
 
-`create_goal(asset, target, end_time, vault=empty(address)) -> (goal: address, token_id: uint256)`
+`create_goal(asset, target, end_time) -> (goal: address, token_id: uint256)`
 
 1. Validate asset allowlisted; duration caps.
 2. `goal = create_from_blueprint(..., start_penalty_bps=START_PENALTY_BPS, ...)` — the factory always passes 8000. Callers do not supply a penalty.
@@ -190,7 +187,7 @@ No custom ERC20/4626 interface files.
 
 Init/immutables: `factory`, `asset`, `treasury`, `target`, `start_time`, `end_time`, `start_penalty_bps`, `token_id`.
 
-State: `principal`, `closed`, optional vault.
+State: `principal`, `closed`.
 
 **Auth:** for `deposit` / `complete` / `early_exit`, require `msg.sender == ERC721(factory).ownerOf(token_id)` (via factory interface / extensible ERC721). Do **not** key auth off a frozen creator address — NFT transfer moves control.
 
@@ -202,17 +199,9 @@ State: `principal`, `closed`, optional vault.
 | `preview_early_exit() -> (fee, net)` | view                                                                                                                    |
 | `complete()`                         | NFT owner; not closed; `principal >= target`; pay principal to owner; close; factory → **Completed** URI                |
 | `early_exit()`                       | NFT owner; not closed; `principal < target`; fee→treasury, net→owner; close; factory → **Completed** URI                |
-| `skim_yield()`                       | phase 3                                                                                                                 |
 
 
 Events: `Deposit`, `Completed`, `EarlyExit` (fee, net, penalty_bps).
-
-### Yield (phase 3)
-
-- Optional `vault` as built-in `IERC4626`  
-- Nominal principal; skim surplus → treasury  
-- NAV < principal → pause deposits + block skim  
-- **v1:** `empty(address)` vault
 
 ---
 
@@ -249,14 +238,14 @@ Events: `Deposit`, `Completed`, `EarlyExit` (fee, net, penalty_bps).
 
 **Do**
 
-- Vyper built-in IERC20/IERC4626 interfaces  
+- Vyper built-in IERC20 interface  
 - `create_from_blueprint` for goals  
 - Factory = ERC-721 access pass + URI state machine  
 - Static IPFS metadata packs per lifecycle
 
 **Don’t**
 
-- Hand-rolled `interfaces/IERC20.vy` / `IERC4626.vy`  
+- Hand-rolled `interfaces/IERC20.vy`  
 - Auth only on immutable creator (ignore NFT)  
 - Onchain dynamic NFT rendering for v1  
 - Foundry/Solidity dual-stack  
@@ -273,8 +262,7 @@ Events: `Deposit`, `Completed`, `EarlyExit` (fee, net, penalty_bps).
 
 1. Blueprint `PaydayGoal` + Factory ERC-721 create/mint + URI slots (pure lock)
 2. Tests T1–T16
-3. Optional ERC-4626 park + skim
-4. Deploy scripts + `deployments/<chain>.json` + document IPFS CIDs
+3. Deploy scripts + `deployments/<chain>.json` + document IPFS CIDs
 
 
 
@@ -283,7 +271,7 @@ Events: `Deposit`, `Completed`, `EarlyExit` (fee, net, penalty_bps).
 - [ ] Goals only via `create_from_blueprint`  
 - [ ] Factory is ERC-721; mint on create; owner gates goal actions  
 - [ ] URI updates Created → InProgress → Completed from IPFS packs  
-- [ ] No custom IERC20/4626 interface files  
+- [ ] No custom IERC20 interface files  
 - [ ] Penalty + access tests green under Moccasin  
 - [ ] README: blueprint deploy, URI pins, param table  
 - [ ] Per-token irreversible transfer disable (soulbind) works; cannot revert  

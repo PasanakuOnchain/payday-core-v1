@@ -14,8 +14,10 @@ from moccasin.config import get_active_network
 from script import verify
 from src import payday_factory, payday_goal
 
+# factory, asset, treasury, target, start_time, end_time,
+# start_penalty_bps, token_id, min_deposit
 _GOAL_CTOR = (
-    "(address,address,address,address,uint256,uint256,uint256,uint256,uint256,uint256)"
+    "(address,address,address,uint256,uint256,uint256,uint256,uint256,uint256)"
 )
 
 
@@ -33,7 +35,6 @@ def goal_ctor_calldata(goal):
             goal.FACTORY(),
             goal.ASSET(),
             goal.TREASURY(),
-            goal.VAULT(),
             goal.TARGET(),
             goal.START_TIME(),
             goal.END_TIME(),

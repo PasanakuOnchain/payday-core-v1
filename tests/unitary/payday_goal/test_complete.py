@@ -72,22 +72,3 @@ def test_complete_when_principal_exceeds_target(factory, asset, saver):
     assert goal.principal() == 0
     assert asset.balanceOf(saver) == saver_before + overshoot
     assert factory.tokenURI(token_id) == URI_COMPLETED
-
-
-def test_complete_donated_surplus_goes_to_treasury(factory, asset, saver, treasury):
-    goal, _ = create_goal(factory, asset, saver)
-    target = goal.TARGET()
-    fund_and_approve(asset, saver, goal.address, target)
-    goal.deposit(target, sender=saver)
-
-    surplus = MIN_DEPOSIT
-    asset.mint(goal.address, surplus)
-
-    saver_before = asset.balanceOf(saver)
-    treasury_before = asset.balanceOf(treasury)
-    goal.complete(sender=saver)
-
-    assert asset.balanceOf(saver) == saver_before + target
-    assert asset.balanceOf(treasury) == treasury_before + surplus
-    assert asset.balanceOf(goal.address) == 0
-    assert goal.closed() is True

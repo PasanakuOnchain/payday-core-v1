@@ -173,7 +173,7 @@ def renounce_ownership():
 
 
 @external
-def create_goal(asset: address, target: uint256, end_time: uint256, start_penalty_bps: uint256, vault: address) -> (address, uint256):
+def create_goal(asset: address, target: uint256, end_time: uint256) -> (address, uint256):
     ...
 
 

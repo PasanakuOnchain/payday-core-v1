@@ -3,7 +3,7 @@ import pytest
 from moccasin.boa_tools import VyperContract
 
 from script.deploy import deploy
-from tests.mocks.deployers import MOCK_ERC20, MOCK_ERC4626
+from tests.mocks.deployers import MOCK_ERC20
 from tests.utils.constants import MIN_DEPOSIT, MIN_TARGET
 
 boa.env.enable_fast_mode()
@@ -46,8 +46,3 @@ def factory(owner: str, treasury: str, asset: VyperContract) -> VyperContract:
         _, deployed = deploy(treasury)
         deployed.set_asset_allowed(asset.address, True, MIN_TARGET, MIN_DEPOSIT)
     return deployed
-
-
-@pytest.fixture
-def vault(asset: VyperContract) -> VyperContract:
-    return MOCK_ERC4626.deploy(asset.address)

@@ -9,8 +9,6 @@ from tests.utils.constants import (
     MIN_DURATION,
 )
 
-EMPTY_ADDRESS = "0x0000000000000000000000000000000000000000"
-
 
 def now() -> int:
     """Current titanoboa timestamp."""
@@ -28,15 +26,11 @@ def create_goal(
     saver: str,
     target: int = DEFAULT_TARGET,
     duration: int = MIN_DURATION,
-    vault: str | None = None,
 ) -> tuple[VyperContract, int]:
     """Create a goal as `saver` and bind a `payday_goal` handle."""
     end_time = now() + duration
-    vault_addr = vault if vault is not None else EMPTY_ADDRESS
     with boa.env.prank(saver):
-        addr, token_id = factory.create_goal(
-            asset.address, target, end_time, vault_addr
-        )
+        addr, token_id = factory.create_goal(asset.address, target, end_time)
     return payday_goal.at(addr), int(token_id)
 
 

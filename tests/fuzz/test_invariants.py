@@ -28,7 +28,7 @@ DAY = 86_400
 
 
 class GoalStateMachine(RuleBasedStateMachine):
-    """One no-vault goal. Ghost accounting tracks deposits vs payouts."""
+    """One goal. Ghost accounting tracks deposits vs payouts."""
 
     def __init__(self) -> None:
         super().__init__()

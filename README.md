@@ -2,7 +2,7 @@
 
 Vyper contracts for onchain commitment savings. A factory ERC-721 mints an access NFT and deploys a goal clone. The NFT owner may deposit, complete, or early-exit.
 
-Free unlock when `principal >= target`. Under target, early exit is all-or-nothing: a linear time-decaying fee goes to treasury, the rest to the NFT owner. Optional ERC-4626 idle yield also goes to treasury.
+Free unlock when `principal >= target`. Under target, early exit is all-or-nothing: a linear time-decaying fee goes to treasury, the rest to the NFT owner.
 
 **Stack:** Vyper 0.4.3, [Moccasin](https://cyfrin.github.io/moccasin/), [snekmate](https://github.com/pcaversaccio/snekmate) (`ownable_2step` + `erc721`).
 
@@ -30,12 +30,9 @@ One goal = one NFT = one allowlisted ERC-20. Transfer of the NFT transfers contr
 | `deposit` | NFT owner | Anytime, `amount >= min_deposit` |
 | `complete` | NFT owner | `principal >= target`; 100% of principal to owner |
 | `early_exit` | NFT owner | `principal < target`; fee to treasury, net to owner; closes |
-| `skim_yield` | anyone | Surplus above nominal principal to treasury |
 | `disable_transfers` | NFT owner | Irreversible soulbind for that `token_id` |
 
 Soulbind does not change `tokenURI`. Deposit, complete, and early-exit still work for the fixed owner. There is no admin unlock.
-
-v1 `create_goal` defaults `vault` to `empty(address)`. When a vault is passed, deposits park there; NAV below principal blocks further deposits and skim.
 
 ### Parameters
 
@@ -48,7 +45,7 @@ Values in `payday_factory.vy` / `tests/utils/constants.py`:
 | Min duration | 30 days |
 | Max duration | 730 days |
 | Min target / min deposit | per-asset, via `set_asset_allowed` |
-| ERC-20 / ERC-4626 | Vyper built-ins `IERC20` / `IERC4626` |
+| ERC-20 | Vyper built-in `IERC20` |
 
 Treasury is set at factory deploy. Existing clones keep the treasury snapshotted at `create_goal`. Owner may `set_treasury` for later clones.
 
@@ -94,7 +91,7 @@ mox test
 mox test tests/unitary/payday_factory/test_create_goal.py -v
 ```
 
-Factory create / soulbind live under `tests/unitary/payday_factory`. Goal deposit / complete / early-exit / yield under `tests/unitary/payday_goal`. NFT transfer and full lifecycle under `tests/integration`. Penalty formula under `tests/fuzz`.
+Factory create / soulbind live under `tests/unitary/payday_factory`. Goal deposit / complete / early-exit under `tests/unitary/payday_goal`. NFT transfer and full lifecycle under `tests/integration`. Penalty formula under `tests/fuzz`.
 
 Format Vyper with `mamushi`; Python with `ruff`.
 
@@ -126,7 +123,6 @@ goal, token_id = factory.create_goal(
     asset,
     target,
     end_time,  # unix; duration in [30d, 730d]
-    # vault=empty by default
     # penalty is always factory.START_PENALTY_BPS (8000)
 )
 ```
