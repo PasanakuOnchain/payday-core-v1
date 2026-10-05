@@ -2,7 +2,7 @@
   "chain": "monad-testnet",
   "chainId": 10143,
   "goalBlueprint": null,
-  "factory": null,
+  "factory": "0xaDD60a39AabFD6f8eBA056153ac2d291d6624f60",
   "treasury": null,
   "uris": {
     "created": "ipfs://payday/v1/created.json",
