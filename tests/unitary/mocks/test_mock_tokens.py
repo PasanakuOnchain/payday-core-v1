@@ -25,17 +25,18 @@ def test_usdt0_metadata():
     assert token.totalSupply() == 0
 
 
-def test_minter_mints_usdc(owner, saver):
+def test_anyone_can_mint_usdc(saver):
     token = mock_usdc.deploy()
-    token.mint(saver, 1_000_000, sender=owner)
+    token.mint(saver, 1_000_000, sender=saver)
     assert token.balanceOf(saver) == 1_000_000
     assert token.totalSupply() == 1_000_000
 
 
-def test_non_minter_cannot_mint_usdt0(saver):
+def test_anyone_can_mint_usdt0(saver):
     token = mock_usdt0.deploy()
-    with boa.reverts("erc20: access is denied"):
-        token.mint(saver, 1, sender=saver)
+    token.mint(saver, 1, sender=saver)
+    assert token.balanceOf(saver) == 1
+    assert token.totalSupply() == 1
 
 
 def test_wmon_metadata():

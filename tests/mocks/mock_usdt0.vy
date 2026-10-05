@@ -6,8 +6,8 @@
 @license GNU Affero General Public License v3.0 only
 @author Payday
 @notice Monad USDT0 stand-in: name `USDT0`, symbol `USDT0`, 6 decimals.
-@dev snekmate `erc20` reference wiring. The deployer is the owner and
-     the first minter. `mint` is minter-gated.
+@dev snekmate `erc20` reference wiring. The deployer is the owner.
+     `mint` is open: any caller may create tokens.
 """
 
 from ethereum.ercs import IERC20
@@ -32,7 +32,32 @@ initializes: ow
 
 from snekmate.tokens import erc20
 initializes: erc20[ownable := ow]
-exports: erc20.__interface__
+
+
+# snekmate `mint` is minter-gated. This mock keeps the rest of the
+# ERC-20 surface and replaces `mint` with an unrestricted entrypoint.
+exports: (
+    erc20.name,
+    erc20.symbol,
+    erc20.decimals,
+    erc20.totalSupply,
+    erc20.balanceOf,
+    erc20.allowance,
+    erc20.nonces,
+    erc20.is_minter,
+    erc20.owner,
+    erc20.transfer,
+    erc20.approve,
+    erc20.transferFrom,
+    erc20.burn,
+    erc20.burn_from,
+    erc20.set_minter,
+    erc20.permit,
+    erc20.DOMAIN_SEPARATOR,
+    erc20.eip712Domain,
+    erc20.transfer_ownership,
+    erc20.renounce_ownership,
+)
 
 
 # @dev Canonical Monad USDT0 metadata.
@@ -55,8 +80,19 @@ EIP712_VERSION: constant(String[20]) = "1"
 @payable
 def __init__():
     """
-    @dev Assigns ownership and the minter role to `msg.sender`.
-         Supply starts at zero; minters call `mint`.
+    @dev Assigns ownership to `msg.sender`. Supply starts at zero.
+         Anyone may call `mint`.
     """
     ow.__init__()
     erc20.__init__(NAME, SYMBOL, DECIMALS, NAME, EIP712_VERSION)
+
+
+@external
+def mint(owner: address, amount: uint256):
+    """
+    @dev Creates `amount` tokens and assigns them to `owner`.
+         Any caller may mint. `owner` cannot be the zero address.
+    @param owner Recipient.
+    @param amount Amount to mint.
+    """
+    erc20._mint(owner, amount)

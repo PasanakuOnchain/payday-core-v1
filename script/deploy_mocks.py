@@ -2,7 +2,7 @@ from tests.mocks import mock_usdc, mock_usdt0, mock_wmon
 
 
 def moccasin_main():
-    """Deploy mock USDC, USDT0, and WMON. The deployer is minter of the stables."""
+    """Deploy mock USDC, USDT0, and WMON. Anyone may mint the stables."""
     usdc = mock_usdc.deploy()
     usdt0 = mock_usdt0.deploy()
     wmon = mock_wmon.deploy()
